@@ -9,13 +9,11 @@ grails.project.dependency.resolution = {
 
     repositories {
         grailsHome()
-        grailsCentral()
-        mavenCentral()
-        mavenRepo "https://repository.intuitive-collaboration.com/nexus/content/repositories/pillarone-public/"
-        mavenRepo("https://repository.intuitive-collaboration.com/nexus/content/repositories/pillarone-public-snapshot/") {
+        mavenLocal()
+
+        mavenRepo (name:"zh-artisan-test" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
             updatePolicy System.getProperty('snapshotUpdatePolicy') ?: 'daily'
         }
-        mavenRepo "http://repo.spring.io/milestone/" //needed for spring-security-core 2.0-rc2 plugin
     }
 
     plugins {
@@ -30,8 +28,8 @@ grails.project.dependency.resolution = {
         compile ":excel-import:1.0.0"
 
         if (appName == "risk-analytics-pc-cashflow") {
-            runtime "org.pillarone:risk-analytics-core:1.9.1"
-            runtime("org.pillarone:risk-analytics-commons:1.9.2") { transitive = false }
+            runtime "org.pillarone:risk-analytics-core:1.9.20-SNAPSHOT"
+            runtime("org.pillarone:risk-analytics-commons:1.9.4-SNAPSHOT") { transitive = false }
         }
     }
 
@@ -45,6 +43,8 @@ grails.project.dependency.resolution = {
 }
 //grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core"
 //grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons"
+
+grails.project.repos.default = "pillarone"
 
 grails.project.dependency.distribution = {
     String password = ""
