@@ -4,9 +4,9 @@
     <property file="application.properties"/>
     <property name="GRAILS_JVM_OPTS" value="-Xmx1024m -XX:MaxPermSize=256m -Duser.language='en'"/>
     <get src="https://raw.githubusercontent.com/AllianzART/risk-analytics-core/1.9.x_local/scripts/build.xml" dest="_build.xml" skipexisting="true" />
-    <mkdir dir="../local-plugins/${app.name}-master" />
+    <mkdir dir="../local-plugins/${app.name}-1.9.x" />
     <copy tofile="_build.xml" overwrite="true" failonerror="false">
-        <fileset dir="../local-plugins/${app.name}-master" includes="risk-analytics-core*/scripts/build.xml" />
+        <fileset dir="../local-plugins/${app.name}-1.9.x" includes="risk-analytics-core*/scripts/build.xml" />
     </copy>
     <import file="_build.xml"/>
 
