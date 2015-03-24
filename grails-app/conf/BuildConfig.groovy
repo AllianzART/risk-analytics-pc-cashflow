@@ -1,5 +1,5 @@
 //Use a custom plugins dir, because different branches use different plugin versions
-grails.project.plugins.dir = "../local-plugins/risk-analytics-pc-cashflow-master"
+grails.project.plugins.dir = "../local-plugins/risk-analytics-pc-cashflow-AR-111"
 
 grails.project.dependency.resolver = "maven"
 
@@ -31,8 +31,8 @@ grails.project.dependency.resolution = {
         compile ":excel-import:1.0.0"
 
         if (appName == "risk-analytics-pc-cashflow") {
-            runtime "org.pillarone:risk-analytics-core:1.10-SNAPSHOT"
-            runtime("org.pillarone:risk-analytics-commons:1.10-SNAPSHOT") { transitive = false }
+            runtime "org.pillarone:risk-analytics-core:AR-111-SNAPSHOT"
+            runtime("org.pillarone:risk-analytics-commons:1.10.1") { transitive = false }
         }
     }
 
