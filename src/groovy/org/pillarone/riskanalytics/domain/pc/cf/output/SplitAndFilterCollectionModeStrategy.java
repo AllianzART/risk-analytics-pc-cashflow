@@ -15,7 +15,8 @@ import org.pillarone.riskanalytics.core.output.PathMapping;
 import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
 import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
-import org.pillarone.riskanalytics.core.simulation.IPeriodCounter;
+import org.pillarone.riskanalytics.core.packets.SingleValuePacket;
+import org.pillarone.riskanalytics.core.simulation.IPeriodCounter; //art 1? //AR-111
 import org.pillarone.riskanalytics.core.simulation.item.Simulation;
 import org.pillarone.riskanalytics.core.util.Manual;
 import org.pillarone.riskanalytics.core.util.PeriodLabelsUtil;
@@ -122,6 +123,10 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         if (drillDownModes.contains(DrillDownMode.BY_PERIOD)) {
             resultMap.putAll(splitByInceptionPeriodPaths(packets));
         }
+        if (drillDownModes.contains(DrillDownMode.BY_PAST_VS_FUTURE)) {
+            resultMap.putAll(splitByOccurrencePeriodvsUpdateDatePaths(packets));
+        }
+
         if (drillDownModes.contains(DrillDownMode.BY_TYPE)) {
             if(packets.get(0) instanceof AdditionalPremium) {
                 resultMap.putAll(splitByAdditionalPremium(packets));
@@ -282,12 +287,28 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         for (Packet packet : packets) {
             PathMapping periodPath = getPathMappingForInceptionPeriod(packet);
             addToMap(packet, periodPath, resultMap);
-            addToMap(packet,getPathMappingForOccurrencePeriodvsUpdateDate(packet),resultMap); //TEST
         }
         return resultMap;
     }
 
+    protected Map<PathMapping, Packet> splitByOccurrencePeriodvsUpdateDatePaths(PacketList<Packet> packets) {
+        //ONE WORD OF DIFFERENCE WITH OTHER METOD! Should be refactored!
+        // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
+        Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(packets.size());
+        if (packets == null || packets.size() == 0) {
+            return resultMap;
+        }
+
+        for (Packet packet : packets) {
+            PathMapping periodPath = getPathMappingForOccurrencePeriodvsUpdateDate(packet);
+            addToMap(packet, periodPath, resultMap);
+        }
+        return resultMap;
+    }
+
+
     protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
+        //can't we just check against the list of compatible classes instead of
         if (packet instanceof ClaimCashflowPacket) {
             addToMap((ClaimCashflowPacket) packet, path, resultMap);
         } else if (packet instanceof UnderwritingInfoPacket) {
@@ -300,6 +321,8 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
             addToMap((AdditionalPremium) packet, path, resultMap);
         } else if (packet instanceof PaidAdditionalPremium) {
             addToMap((PaidAdditionalPremium) packet, path, resultMap);
+        } else if (packet instanceof SingleValuePacket){
+            addToMap((SingleValuePacket) packet, path, resultMap);
         } else {
             throw new IllegalArgumentException("Packet type " + packet.getClass() + " is not supported.");
         }
@@ -346,6 +369,16 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         }
     }
 
+    protected void addToMap(SingleValuePacket packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
+        if (path == null) return;
+        if (resultMap.containsKey(path)) {
+            SingleValuePacket aggregatePacket = (SingleValuePacket) resultMap.get(path);
+            aggregatePacket.value += packet.value;
+            resultMap.put(path, aggregatePacket);
+        } else {
+            resultMap.put(path, packet.copy());
+        }
+    }
     /**
      * @param packet
      * @return path extended by period:inceptionPeriod, the later being built using inceptionPeriod(packet)
@@ -389,22 +422,25 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
     }
 
     private String occurrencePeriodvsUpdateDate(Packet packet) {
-        LOG.warn("TODO remove evil hack and fix test (see code comment in SplitAndFilterCollectionModeSTrategy.java)");
+        LOG.warn("TODO remove evil hack and fix test (see code comment in SplitAndFilterCollectionModeStrategy.java)");
         DateTime occurrenceDate = null;
         Simulation simulation = packetCollector.getSimulationScope().getSimulation();
         if(  simulation != null ){
             DateTime updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate"));
             if (packet instanceof ClaimCashflowPacket) {
                 occurrenceDate = ((ClaimCashflowPacket) packet).getBaseClaim().getOccurrenceDate();
-//        } else if (packet instanceof UnderwritingInfoPacket) {
-//            date = ((UnderwritingInfoPacket) packet).getExposure().getInceptionDate();
-//        } else if (packet instanceof ContractFinancialsPacket) {
-//            date = ((ContractFinancialsPacket) packet).getInceptionDate();
-//        } else if (packet instanceof FinancialsPacket) {
-//            date = ((FinancialsPacket) packet).getInceptionDate();
-            } else {
+              } else if (packet instanceof SingleValuePacket) {
+                occurrenceDate = ((SingleValuePacket) packet).getDate();
+//            } else if (packet instanceof UnderwritingInfoPacket) {
+//              date = ((UnderwritingInfoPacket) packet).getExposure().getInceptionDate();
+//            } else if (packet instanceof ContractFinancialsPacket) {
+//              date = ((ContractFinancialsPacket) packet).getInceptionDate();
+//            } else if (packet instanceof FinancialsPacket) {
+//               date = ((FinancialsPacket) packet).getInceptionDate();
+              } else {
                 throw new IllegalArgumentException("Packet type " + packet.getClass() + " not supported for split cashflow on past/future occurrence date");
             }
+
             IPeriodCounter PC =  packetCollector.getSimulationScope().getIterationScope().getPeriodScope().getPeriodCounter();
 
             if(occurrenceDate == null ){
@@ -432,11 +468,13 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
      */
     @Override
     protected void initSimulation() {
+
         super.initSimulation();
         IPeriodCounter periodCounter = packetCollector.getSimulationScope().getIterationScope().getPeriodScope().getPeriodCounter();
         boolean projectionStartsOnFirstJanuary = periodCounter.startOfFirstPeriod().dayOfYear().get() == 1;
         boolean annualPeriods = periodCounter.annualPeriodsOnly(false);
         displayUnderwritingYearOnly = projectionStartsOnFirstJanuary && annualPeriods;
+
     }
 
     @Override
