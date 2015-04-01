@@ -1,6 +1,7 @@
 import org.pillarone.riskanalytics.core.output.CollectingModeFactory
 import org.pillarone.riskanalytics.core.output.DrillDownMode
 import org.pillarone.riskanalytics.core.output.aggregation.PacketAggregatorRegistry
+import org.pillarone.riskanalytics.core.packets.SingleValuePacket
 import org.pillarone.riskanalytics.core.parameterization.ConstraintsFactory
 import org.pillarone.riskanalytics.core.parameterization.validation.ValidatorRegistry
 import org.pillarone.riskanalytics.core.util.ResourceBundleRegistry
@@ -145,6 +146,23 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_TYPE], [], [AdditionalPremium, PaidAdditionalPremium]))
+//AR-111 BLOCK BEGIN
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PAST_VS_FUTURE], [0, 3, 5, 7, 8, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PAST_VS_FUTURE], [0, 3, 5, 7, 8, 10, 11, 12].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PAST_VS_FUTURE], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PAST_VS_FUTURE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
+
+
+        //Artisan 1 attempt
+        //Rationale: My bet here is that the part of Artisan/P1 programmed by smart people would show options in
+        //simulation collection templates based on which collectors are compatible to each channel, using the compatible
+        //packet list specified here in the third parameter. -- after trying, it appears to be so
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE],[] ,[SingleValuePacket]))
+    //AR-111 BLOCK END
     }
 
     def onChange = { event ->
