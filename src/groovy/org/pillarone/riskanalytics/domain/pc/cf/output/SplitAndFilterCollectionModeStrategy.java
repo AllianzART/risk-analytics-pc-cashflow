@@ -422,7 +422,9 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
     }
 
     private String occurrencePeriodvsUpdateDate(Packet packet) {
+        if( new Random(System.currentTimeMillis()).nextInt(64) < 10 ){ //Avoid too much log spam
         LOG.warn("TODO remove evil hack and fix test (see code comment in SplitAndFilterCollectionModeStrategy.java)");
+        }
         DateTime occurrenceDate = null;
         Simulation simulation = packetCollector.getSimulationScope().getSimulation();
         if(  simulation != null ){
