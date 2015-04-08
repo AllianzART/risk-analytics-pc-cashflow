@@ -44,7 +44,7 @@ grails.project.dependency.resolution = {
         }
     }
 }
-grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core-AR-111"
+//grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core-AR-111"
 //grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons"
 
 grails.project.repos.default = "pillarone"
