@@ -30,6 +30,7 @@ grails.project.dependency.resolution = {
         if (appName == "risk-analytics-pc-cashflow") {
             runtime "org.pillarone:risk-analytics-core:AR-111-SNAPSHOT"
             runtime("org.pillarone:risk-analytics-commons:1.9.4-SNAPSHOT") { transitive = false }
+         // 1 runtime("org.pillarone:risk-analytics-property-casualty:1.9.3-SNAPSHOT") { transitive = false }
         }
     }
 
@@ -42,9 +43,10 @@ grails.project.dependency.resolution = {
     }
 }
 //grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core-AR-111"
+grails.plugin.location.'risk-analytics-property-casualty' = "../risk-analytics-property-casualty-AR-111"
 //grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons"
 
-grails.project.repos.default = "pillarone"
+grails.project.repos.default = "central"
 
 grails.project.dependency.distribution = {
     String password = ""
