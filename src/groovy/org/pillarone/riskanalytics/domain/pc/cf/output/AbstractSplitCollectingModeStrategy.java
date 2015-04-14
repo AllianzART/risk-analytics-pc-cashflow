@@ -191,7 +191,7 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
             List<ClaimDevelopmentPacket> claims = new ArrayList<ClaimDevelopmentPacket>();
             claims.add(aggregateClaim);
             claims.add(claim);
-            resultMap.put(path, ClaimUtils.sum(ClaimUtils.aggregateByBaseClaim(claims), true));
+            resultMap.put(path, ClaimUtils.sumCDP(ClaimUtils.aggregateByBaseClaimCDP(claims), true));
         } else {
             ClaimDevelopmentPacket clonedClaim = (ClaimDevelopmentPacket) claim.copy();
             resultMap.put(path, clonedClaim);

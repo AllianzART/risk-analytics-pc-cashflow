@@ -294,7 +294,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
     }
 
     protected Map<PathMapping, Packet> splitByOccurrencePeriodvsUpdateDatePaths(PacketList<Packet> packets) {
-        //ONE WORD OF DIFFERENCE WITH OTHER METOD! Should be refactored!
+        //ONE WORD OF DIFFERENCE WITH OTHER METHOD! Should be refactored!
         // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
         Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(packets.size());
         if (packets == null || packets.size() == 0) {
