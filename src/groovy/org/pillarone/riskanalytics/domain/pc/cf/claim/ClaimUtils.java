@@ -22,8 +22,8 @@ import java.util.*;
 public class ClaimUtils {
 
     /**
-     * Adds up all claims and builds a corresponding new base claim. It's exposure info and discount factor is null.
-     * WARNING: if the updatePeriod of the first claim is not set the return claim has updatePeriod = 0.
+     * Adds up all claims and builds a corresponding new base claim. Its exposure info and discount factor is null.
+     * WARNING: if the updatePeriod of the first claim is not set the returned claim has updatePeriod = 0.
      *
      * @param claims
      * @param sameBaseClaim: Marker interface of returned packet are all null if false
@@ -32,7 +32,7 @@ public class ClaimUtils {
     public static ClaimCashflowPacket sum(List<ClaimCashflowPacket> claims, boolean sameBaseClaim) {
         /** PA Note during work on AR-111
         **  Substantial code duplication with aggregateByBaseClaim below.
-        **  the two "static methods" are also
+        **  the two "static methods" are also applied on on top of the other in at least one place
         **  other note: I think this at least should be a static method of ClaimCashflowPacket and
         **  other children of the Claim class, especially after pairing with duck-typing - now I see
         **  constructs that could be greatly simplified
@@ -84,7 +84,7 @@ public class ClaimUtils {
         summedClaims.setReserveRisk(reserveRisk);
         return summedClaims;
     }
-    public static ClaimDevelopmentPacket sum(List<ClaimDevelopmentPacket> claims, boolean sameBaseClaim) {
+    public static ClaimDevelopmentPacket sumCDP(List<ClaimDevelopmentPacket> claims, boolean sameBaseClaim) {
         /** PA Note during work on AR-111
         **  This should probably be made a method of the class above...
         **/
@@ -94,45 +94,36 @@ public class ClaimUtils {
         if (!sameBaseClaim) {
             throw new NotImplementedException("method is currently implemented for same base claim only");
         }
-        double ultimate = 0;
-        double nominalUltimate = 0;
-        double paidIncremental = 0;
-        double paidCumulated = 0;
-        double reportedIncremental = 0;
-        double reportedCumulated = 0;
-        double reserves = 0;
-        double appliedIndex = 1;
-        double changeInReservesIndexed = 0;
-        double changeInIBNRIndexed = 0;
-        double premiumRisk = 0;
-        double reserveRisk = 0;
-        for (ClaimCashflowPacket claim : claims) {
-            ultimate += claim.ultimate();
-            nominalUltimate += claim.nominalUltimate();
-            paidIncremental += claim.getPaidIncrementalIndexed();
-            paidCumulated += claim.getPaidCumulatedIndexed();
-            reportedIncremental += claim.getReportedIncrementalIndexed();
-            reportedCumulated += claim.getReportedCumulatedIndexed();
-            reserves += claim.reservedIndexed();
-            appliedIndex *= claim.getAppliedIndexValue();
-            changeInReservesIndexed += claim.getChangeInReservesIndexed();
-            changeInIBNRIndexed += claim.getChangeInIBNRIndexed();
-            premiumRisk += claim.getPremiumRisk();
-            reserveRisk += claim.getReserveRisk();
+        double paid = 0;
+        double reserved = 0;
+        double changeInReserves = 0;
+
+        for (ClaimDevelopmentPacket claim : claims) {
+            paid += claim.getPaid();
+            reserved += claim.getReserved();
+            // Summing every thing this time as the other sum sums even ultimates
+            changeInReserves += claim.getChangeInReserves(); //changes in reserves should be incremental by def
         }
-        ClaimRoot baseClaim = new ClaimRoot(ultimate, claims.get(0).getBaseClaim());
-        DateTime updateDate = claims.get(0).getUpdateDate();
-        int updatePeriod = 0;
-        if (claims.get(0).getUpdatePeriod() != null) {
-            updatePeriod = claims.get(0).getUpdatePeriod();
-        }
-        ClaimCashflowPacket summedClaims = new ClaimCashflowPacket(baseClaim, ultimate, nominalUltimate, paidIncremental,
-                paidCumulated, reportedIncremental, reportedCumulated, reserves, changeInReservesIndexed,
-                changeInIBNRIndexed, null, updateDate, updatePeriod);
-        applyMarkers(claims.get(0), summedClaims);
-        summedClaims.setAppliedIndexValue(claims.size() == 0 ? 1d : Math.pow(appliedIndex, 1d / claims.size()));
-        summedClaims.setPremiumRisk(premiumRisk);
-        summedClaims.setReserveRisk(reserveRisk);
+
+//        ClaimRoot baseClaim = new ClaimRoot(ultimate, claims.get(0).getBaseClaim());
+        Claim baseClaim = new Claim();
+        baseClaim.set(claims.get(0).getOriginalClaim());
+
+        //..hmmm how to do this right ?
+
+//        DateTime updateDate = claims.get(0).getUpdateDate();
+//        int updatePeriod = 0;
+//        if (claims.get(0).getUpdatePeriod() != null) {
+//            updatePeriod = claims.get(0).getUpdatePeriod();
+//        }
+
+        ClaimDevelopmentPacket summedClaims = new ClaimDevelopmentPacket(baseClaim);
+        // this may bite...
+//        applyMarkers(claims.get(0), summedClaims);
+
+        summedClaims.setPaid(paid);
+        summedClaims.setReserved(reserved);
+        summedClaims.setChangeInReserves(changeInReserves);
         return summedClaims;
     }
 
@@ -221,7 +212,7 @@ public class ClaimUtils {
         return aggregateByBaseClaim;
     }
 
-    public static List<ClaimDevelopmentPacket> aggregateByBaseClaim(List<ClaimDevelopmentPacket> claims) {
+    public static List<ClaimDevelopmentPacket> aggregateByBaseClaimCDP(List<ClaimDevelopmentPacket> claims) {
 
         List<ClaimDevelopmentPacket> aggregateByBaseClaim = new ArrayList<ClaimDevelopmentPacket>();
         ListMultimap<Claim, ClaimDevelopmentPacket> claimsByBaseClaim = ArrayListMultimap.create();
@@ -241,12 +232,12 @@ public class ClaimUtils {
                 for (ClaimDevelopmentPacket claim : claimsWithSameBaseClaim) {
                     paid = claim.getPaid();
                     reserved = claim.getReserved();
-                    // I'm not summing as I'd guess these not to be incremental but total value
+                    // I'm not summing as I'd guess these not to be incremental but total values
                     //assumption would be that we are looking at updates to the same claim, in chronological order
                     changeInReserves += claim.getChangeInReserves(); //changes in reserves should be incremental by def
                 }
                 Claim baseClaim = new Claim();
-                //baseClaim.set(claims.get(0).getOriginalClaim());
+                baseClaim.set(claims.get(0).getOriginalClaim());
 
 //                int updatePeriod = 0;
 //                if (claims.get(0). != null) {
@@ -557,6 +548,16 @@ public class ClaimUtils {
         target.setMarker(source.legalEntity());
         target.setMarker(source.reserve());
     }
+
+// May need something like this - cross this bridge if it bites
+
+//    public static void applyMarkers(ClaimDevelopmentPacket source, ClaimDevelopmentPacket smurf) {
+//        smurf.addMarker( IPerilMarker, source.getPeril());
+//        smurf.setMarker(source.getLineOfBusiness());
+//        smurf.setMarker(source.getReinsuranceContract());
+//        //target.setMarker(source.legalEntity());
+//        //target.setMarker(source.getReserve());
+//    }
 
     public static List<ClaimCashflowPacket> calculateNetClaims(List<ClaimCashflowPacket> claimsGross,
                                                                List<ClaimCashflowPacket> claimsCeded) {
