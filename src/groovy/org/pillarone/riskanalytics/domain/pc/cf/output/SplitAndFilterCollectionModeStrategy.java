@@ -16,6 +16,7 @@ import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
 import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
 import org.pillarone.riskanalytics.core.packets.SingleValuePacket;
+import org.pillarone.riskanalytics.core.packets.MultiValuePacket;
 import org.pillarone.riskanalytics.core.simulation.IPeriodCounter; //art 1? //AR-111
 import org.pillarone.riskanalytics.core.simulation.item.Simulation;
 import org.pillarone.riskanalytics.core.util.Manual;
@@ -26,6 +27,7 @@ import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.ContractFinancialsPa
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.PaidAdditionalPremium;
 import org.pillarone.riskanalytics.domain.pc.cf.segment.FinancialsPacket;
+import org.pillarone.riskanalytics.domain.pc.reserves.cashflow.ClaimDevelopmentPacket;
 import org.pillarone.riskanalytics.domain.utils.marker.ILegalEntityMarker;
 import org.pillarone.riskanalytics.domain.utils.marker.IReinsuranceContractMarker;
 import org.pillarone.riskanalytics.domain.utils.marker.ISegmentMarker;
@@ -308,7 +310,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
 
 
     protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        //can't we just check against the list of compatible classes instead of
+        //can't we just check against the list of compatible classes instead of doing this?
         if (packet instanceof ClaimCashflowPacket) {
             addToMap((ClaimCashflowPacket) packet, path, resultMap);
         } else if (packet instanceof UnderwritingInfoPacket) {
@@ -323,6 +325,8 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
             addToMap((PaidAdditionalPremium) packet, path, resultMap);
         } else if (packet instanceof SingleValuePacket){
             addToMap((SingleValuePacket) packet, path, resultMap);
+        } else if (packet instanceof ClaimDevelopmentPacket){
+                    addToMap((ClaimDevelopmentPacket) packet, path, resultMap);
         } else {
             throw new IllegalArgumentException("Packet type " + packet.getClass() + " is not supported.");
         }
@@ -433,6 +437,8 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
                 occurrenceDate = ((ClaimCashflowPacket) packet).getBaseClaim().getOccurrenceDate();
               } else if (packet instanceof SingleValuePacket) {
                 occurrenceDate = ((SingleValuePacket) packet).getDate();
+              } else if (packet instanceof ClaimDevelopmentPacket) {
+                occurrenceDate = ((ClaimDevelopmentPacket) packet).getIncurredDate();
 //            } else if (packet instanceof UnderwritingInfoPacket) {
 //              date = ((UnderwritingInfoPacket) packet).getExposure().getInceptionDate();
 //            } else if (packet instanceof ContractFinancialsPacket) {

@@ -11,6 +11,9 @@ import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.ContractFinancialsPa
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.PaidAdditionalPremium
 import org.pillarone.riskanalytics.domain.pc.cf.segment.FinancialsPacket as FP
+import org.pillarone.riskanalytics.domain.pc.cf.structure.validation.ClaimTypeStructuringValidator
+import org.pillarone.riskanalytics.domain.pc.reserves.cashflow.ClaimDevelopmentPacket as CDP
+import org.pillarone.riskanalytics.domain.utils.constraint.*
 
 class RiskAnalyticsPcCashflowGrailsPlugin {
     // the plugin version
@@ -128,6 +131,9 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         //simulation collection templates based on which collectors are compatible to each channel, using the compatible
         //packet list specified here in the third parameter. -- after trying, it appears to be so
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE],[] ,[SingleValuePacket]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE],[CDP.PAID] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE],[CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PAST_VS_FUTURE],[CDP.CHANGE_IN_RESERVES] ,[CDP]))
     //AR-111 BLOCK END
     }
 

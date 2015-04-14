@@ -11,6 +11,7 @@ import org.pillarone.riskanalytics.core.simulation.engine.MappingCache;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimUtils;
 import org.pillarone.riskanalytics.domain.pc.cf.exposure.UnderwritingInfoPacket;
+import org.pillarone.riskanalytics.domain.pc.reserves.cashflow.ClaimDevelopmentPacket;
 import org.pillarone.riskanalytics.domain.utils.marker.ComposedMarkerKey;
 
 import java.util.*;
@@ -90,6 +91,7 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
 
     public boolean checkInvalidValues(String name, Double value, int period, int iteration, boolean crashSimulationOnError) {
         if (value.isInfinite() || value.isNaN()) {
+
             StringBuilder message = new StringBuilder();
             message.append(value).append(" collected at ").append(packetCollector.getPath()).append(":").append(name);
             message.append(" (period ").append(period).append(") in iteration ");
@@ -178,6 +180,20 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
             resultMap.put(path, ClaimUtils.sum(ClaimUtils.aggregateByBaseClaim(claims), true));
         } else {
             ClaimCashflowPacket clonedClaim = (ClaimCashflowPacket) claim.copy();
+            resultMap.put(path, clonedClaim);
+        }
+    }
+
+    protected void addToMap(ClaimDevelopmentPacket claim, PathMapping path, Map<PathMapping, Packet> resultMap) {
+        if (path == null) return;
+        if (resultMap.containsKey(path)) {
+            ClaimDevelopmentPacket aggregateClaim = (ClaimDevelopmentPacket) resultMap.get(path);
+            List<ClaimDevelopmentPacket> claims = new ArrayList<ClaimDevelopmentPacket>();
+            claims.add(aggregateClaim);
+            claims.add(claim);
+            resultMap.put(path, ClaimUtils.sum(ClaimUtils.aggregateByBaseClaim(claims), true));
+        } else {
+            ClaimDevelopmentPacket clonedClaim = (ClaimDevelopmentPacket) claim.copy();
             resultMap.put(path, clonedClaim);
         }
     }
