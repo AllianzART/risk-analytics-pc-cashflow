@@ -11,7 +11,7 @@ grails.project.dependency.resolution = {
         grailsHome()
         mavenLocal()
 
-        mavenRepo (name:"zh-artisan-test" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
+        mavenRepo (name:"pillarone" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
             updatePolicy System.getProperty('snapshotUpdatePolicy') ?: 'daily'
         }
     }
@@ -46,7 +46,7 @@ grails.project.dependency.resolution = {
 //grails.plugin.location.'risk-analytics-property-casualty' = "../risk-analytics-property-casualty-AR-111"
 //grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons-AR-111"
 
-grails.project.repos.default = "central"
+grails.project.repos.default = "pillarone"
 
 grails.project.dependency.distribution = {
     String password = ""
