@@ -116,7 +116,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         if (drillDownModes.contains(DrillDownMode.BY_SOURCE)) {
 //            if (packets.getType().equals(ClaimCashflowPacket.class)) {
             if (packets.get(0) instanceof ClaimCashflowPacket) {
-                resultMap.putAll(splitBySourePathsForClaims(packets));
+                resultMap.putAll(splitBySourcePathsForClaims(packets));
 //            } else if (packets.getType().equals(UnderwritingInfoPacket.class)) {
             } else if (packets.get(0) instanceof UnderwritingInfoPacket) {
                 resultMap.putAll(splitBySourePathsForUwInfos(packets));
@@ -125,8 +125,8 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         if (drillDownModes.contains(DrillDownMode.BY_PERIOD)) {
             resultMap.putAll(splitByInceptionPeriodPaths(packets));
         }
-        if (drillDownModes.contains(DrillDownMode.BY_PAST_VS_FUTURE)) {
-            resultMap.putAll(splitByOccurrencePeriodvsUpdateDatePaths(packets));
+        if (drillDownModes.contains(DrillDownMode.BY_UPDATEDATE)) {
+            resultMap.putAll(splitByOccurrenceAgainstUpdateDatePaths(packets));
         }
 
         if (drillDownModes.contains(DrillDownMode.BY_TYPE)) {
@@ -175,7 +175,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
      * @param claims
      * @return a map with paths as key
      */
-    protected Map<PathMapping, Packet> splitBySourePathsForClaims(PacketList<Packet> claims) {
+    protected Map<PathMapping, Packet> splitBySourcePathsForClaims(PacketList<Packet> claims) {
         // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
         Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(claims.size());
         if (claims == null || claims.size() == 0) {
@@ -293,7 +293,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         return resultMap;
     }
 
-    protected Map<PathMapping, Packet> splitByOccurrencePeriodvsUpdateDatePaths(PacketList<Packet> packets) {
+    protected Map<PathMapping, Packet> splitByOccurrenceAgainstUpdateDatePaths(PacketList<Packet> packets) {
         //ONE WORD OF DIFFERENCE WITH OTHER METHOD! Should be refactored!
         // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
         Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(packets.size());
