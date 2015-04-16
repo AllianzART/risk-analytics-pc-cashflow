@@ -166,6 +166,7 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.CHANGE_IN_RESERVES] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
     //AR-111 BLOCK END
     }
 
