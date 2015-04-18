@@ -225,12 +225,27 @@ public class StatelessRIContract extends Component implements IReinsuranceContra
         filterPremium();
     }
 
+//TODO add this somehow to whole hierarchy ? with aspect ?
+//    // Return the fully nested name of this component by recursively calling base class components
+//    @Override
+//    public String getPathName(){
+//        return super.getPathName() + getName();
+//
+//    }
     public void filterPremium() {
         List<IPremiumInfoMarker> coveredPremiums = (List<IPremiumInfoMarker>) parmPremiumCover.getValuesAsObjects(PremiumSelectionConstraints.PREMIUM_INDEX);
         List<UnderwritingInfoPacket> uncoveredPremium = Lists.newArrayList();
         for (UnderwritingInfoPacket underwritingInfoPacket : inPremiumPerPeriod) {
             for (IPremiumInfoMarker coveredPremium : coveredPremiums) {
-                if (!underwritingInfoPacket.getOrigin().getName().equals(coveredPremium.getName())) {
+                if (underwritingInfoPacket.getOrigin() == null ){
+                    String pathName = super.getName() + getName();
+                    String w = "Path: "+pathName+", No origin in underwritingInfoPacket - maybe a premium payment is after contract start date? Check premiums in model";
+                    LOG.warn(w);
+//                    throw new SimulationException(w);
+                }
+                //AR-131 Discard dodgy uwInfos that appear eg when premium starts after contract
+                if( underwritingInfoPacket.getOrigin() == null ||
+                   !underwritingInfoPacket.getOrigin().getName().equals(coveredPremium.getName())) {
                     uncoveredPremium.add(underwritingInfoPacket);
                 }
             }
