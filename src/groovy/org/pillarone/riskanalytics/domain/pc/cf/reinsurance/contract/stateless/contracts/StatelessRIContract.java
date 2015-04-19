@@ -241,7 +241,7 @@ public class StatelessRIContract extends Component implements IReinsuranceContra
                     String pathName = super.getName() + getName();
                     String w = "Path: "+pathName+", No origin in underwritingInfoPacket - maybe a premium payment is after contract start date? Check premiums in model";
                     LOG.warn(w);
-//                    throw new SimulationException(w);
+                    throw new SimulationException(w);
                 }
                 //AR-131 Discard dodgy uwInfos that appear eg when premium starts after contract
                 if( underwritingInfoPacket.getOrigin() == null ||
