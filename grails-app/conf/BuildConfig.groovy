@@ -1,5 +1,5 @@
 //Use a custom plugins dir, because different branches use different plugin versions
-grails.project.plugins.dir = "../local-plugins/risk-analytics-pc-cashflow-1.9.x"
+grails.project.plugins.dir = "../local-plugins/risk-analytics-pc-cashflow-master"
 
 grails.project.dependency.resolver = "maven"
 
@@ -14,6 +14,9 @@ grails.project.dependency.resolution = {
         mavenRepo (name:"zh-artisan-test" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
             updatePolicy System.getProperty('snapshotUpdatePolicy') ?: 'daily'
         }
+        grailsCentral()
+        mavenCentral()
+        mavenRepo 'http://repo.spring.io/milestone'
     }
 
     plugins {
@@ -28,8 +31,8 @@ grails.project.dependency.resolution = {
         compile ":excel-import:1.0.0"
 
         if (appName == "risk-analytics-pc-cashflow") {
-            runtime "org.pillarone:risk-analytics-core:1.9.20"
-            runtime("org.pillarone:risk-analytics-commons:1.9.4") { transitive = false }
+            runtime "org.pillarone:risk-analytics-core:1.10-SNAPSHOT"
+            runtime("org.pillarone:risk-analytics-commons:1.10-SNAPSHOT") { transitive = false }
         }
     }
 
