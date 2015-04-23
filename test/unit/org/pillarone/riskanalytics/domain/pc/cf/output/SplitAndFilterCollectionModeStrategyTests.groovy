@@ -74,17 +74,17 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         assert 2 == result.size(), 'only the ultimate and changes in IBNR fields expected'
     }
 
-// AR-111 BROKEN TEST
-//    void testCollectChanges_no_filter_split_by_period() {
-//        def simulationStart = new DateTime(System.currentTimeMillis())
-//        PacketList packets = new PacketList()
-//        def packet = new ClaimCashflowPacket()
-//        packet.baseClaim.exposureStartDate = simulationStart
-//        packets.add(packet)
-//        setupStrategy([DrillDownMode.BY_PERIOD], [], simulationStart)
-//        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
-//        assert 2 * packet.valuesToSave.size() == result.size()
-//    }
+// AR-111 USED TO BREAK THIS
+    void testCollectChanges_no_filter_split_by_period() {
+        def simulationStart = new DateTime(System.currentTimeMillis())
+        PacketList packets = new PacketList()
+        def packet = new ClaimCashflowPacket()
+        packet.baseClaim.exposureStartDate = simulationStart
+        packets.add(packet)
+        setupStrategy([DrillDownMode.BY_PERIOD], [], simulationStart)
+        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
+        assert 2 * packet.valuesToSave.size() == result.size()
+    }
 
     void testCollectChanges_no_filter_split_by_source() {
         def simulationStart = new DateTime(System.currentTimeMillis())
@@ -101,36 +101,36 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
 
 
 
-// AR-111 BROKEN TEST
-//    void testCollectChanges_no_filter_split_by_source_and_by_period() {
-//        def simulationStart = new DateTime(System.currentTimeMillis())
-//        PacketList packets = new PacketList()
-//        def packet = new ClaimCashflowPacket()
-//        packets.add(packet)
-//        packet.baseClaim.exposureStartDate = simulationStart
-//        packet.senderChannelName = 'senderChannelName'
-//        packet.setSender(new Segment())
-//        packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
-//        setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [], simulationStart)
-//        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
-//        assert 3 * packet.valuesToSave.size() == result.size()
-//    }
+// AR-111 USED TO BREAK THIS
+    void testCollectChanges_no_filter_split_by_source_and_by_period() {
+        def simulationStart = new DateTime(System.currentTimeMillis())
+        PacketList packets = new PacketList()
+        def packet = new ClaimCashflowPacket()
+        packets.add(packet)
+        packet.baseClaim.exposureStartDate = simulationStart
+        packet.senderChannelName = 'senderChannelName'
+        packet.setSender(new Segment())
+        packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
+        setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [], simulationStart)
+        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
+        assert 3 * packet.valuesToSave.size() == result.size()
+    }
 
 
-// AR-111 BROKEN TEST
-//    void testCollectChanges_with_filter_split_by_source_and_by_period() {
-//        def simulationStart = new DateTime(System.currentTimeMillis())
-//        PacketList packets = new PacketList()
-//        def packet = new ClaimCashflowPacket()
-//        packets.add(packet)
-//        packet.baseClaim.exposureStartDate = simulationStart
-//        packet.senderChannelName = 'senderChannelName'
-//        packet.setSender(new Segment())
-//        packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
-//        setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [ClaimCashflowPacket.CHANGES_IN_IBNR_INDEXED], simulationStart)
-//        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
-//        assert 3 == result.size()
-//    }
+// AR-111 USED TO BREAK THIS
+    void testCollectChanges_with_filter_split_by_source_and_by_period() {
+        def simulationStart = new DateTime(System.currentTimeMillis())
+        PacketList packets = new PacketList()
+        def packet = new ClaimCashflowPacket()
+        packets.add(packet)
+        packet.baseClaim.exposureStartDate = simulationStart
+        packet.senderChannelName = 'senderChannelName'
+        packet.setSender(new Segment())
+        packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
+        setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [ClaimCashflowPacket.CHANGES_IN_IBNR_INDEXED], simulationStart)
+        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
+        assert 3 == result.size()
+    }
 
     void testCollectType(){
         def simulationStart = new DateTime(System.currentTimeMillis())
