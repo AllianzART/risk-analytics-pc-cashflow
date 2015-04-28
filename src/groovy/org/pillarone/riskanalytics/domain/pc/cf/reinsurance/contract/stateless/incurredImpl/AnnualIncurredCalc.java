@@ -1,11 +1,8 @@
 package org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.incurredImpl;
 
-
-import org.gridgain.grid.typedef.internal.A;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.IClaimRoot;
 import org.pillarone.riskanalytics.core.simulation.SimulationException;
 import org.pillarone.riskanalytics.core.simulation.engine.PeriodScope;
-import org.pillarone.riskanalytics.core.simulation.IPeriodCounter;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.LayerParameters;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.AdditionalPremiumPerLayer;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.ContractCoverBase;
@@ -51,14 +48,14 @@ public class AnnualIncurredCalc implements IIncurredCalculation {
                 case PREMIUM:
                     double loss = lossAfterAnnualStructure(incurredClaims, tempLayer);
                     double premAP = (loss * layerPremium * layerParameters.getShare() * additionalPremiumPerLayer.getAdditionalPremium()) / tempLayer.getClaimLimit();
-                    if(premAP != 0 ){
+                    if (premAP != 0) {
                         AdditionalPremium lossAPo = new AdditionalPremium(premAP, CalcAPBasis.PREMIUM);
                         additionalPremiums.add(lossAPo);
                     }
                     break;
                 case LOSS:
                     double lossAP = layerCededIncurred(incurredClaims, tempLayer) * additionalPremiumPerLayer.getAdditionalPremium();
-                    if(lossAP != 0 ) {
+                    if (lossAP != 0) {
                         AdditionalPremium additionalPremium = new AdditionalPremium(lossAP, CalcAPBasis.LOSS);
                         additionalPremiums.add(additionalPremium);
                     }
@@ -68,7 +65,7 @@ public class AnnualIncurredCalc implements IIncurredCalculation {
                     if (layerCededIncurred(incurredClaims, tempLayer) == 0) {
                         ncbAP = layerParameters.getShare() * additionalPremiumPerLayer.getAdditionalPremium() * layerPremium;
                     }
-                    if(ncbAP != 0) {
+                    if (ncbAP != 0) {
                         additionalPremiums.add(new AdditionalPremium(ncbAP, CalcAPBasis.NCB));
                     }
                     break;
