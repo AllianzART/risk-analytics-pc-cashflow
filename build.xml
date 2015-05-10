@@ -3,11 +3,8 @@
 
     <property file="application.properties"/>
     <property name="GRAILS_JVM_OPTS" value="-Xmx1024m -XX:MaxPermSize=256m -Duser.language='en'"/>
-    <get src="https://raw.githubusercontent.com/AllianzART/risk-analytics-core/master/scripts/build.xml" dest="_build.xml" skipexisting="true" />
-    <mkdir dir="../local-plugins/${app.name}-master" />
-    <copy tofile="_build.xml" overwrite="true" failonerror="false">
-        <fileset dir="../local-plugins/${app.name}-master" includes="risk-analytics-core*/scripts/build.xml" />
-    </copy>
+    <get src="https://raw.githubusercontent.com/AllianzART/risk-analytics-core/release-1.10/scripts/build.xml" dest="_build.xml" skipexisting="true" />
+    <mkdir dir="../local-plugins/${app.name}-release-1.10" />
     <import file="_build.xml"/>
 
     <target name="_beforeTest" >

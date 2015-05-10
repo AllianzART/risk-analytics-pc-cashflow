@@ -11,7 +11,7 @@ grails.project.dependency.resolution = {
         grailsHome()
         mavenLocal()
 
-        mavenRepo (name:"zh-artisan-test" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
+        mavenRepo (name:"pillarone" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
             updatePolicy System.getProperty('snapshotUpdatePolicy') ?: 'daily'
         }
         grailsCentral()
@@ -31,8 +31,8 @@ grails.project.dependency.resolution = {
         compile ":excel-import:1.0.0"
 
         if (appName == "risk-analytics-pc-cashflow") {
-            runtime "org.pillarone:risk-analytics-core:1.10-SNAPSHOT"
-            runtime("org.pillarone:risk-analytics-commons:1.10-SNAPSHOT") { transitive = false }
+            runtime "org.pillarone:risk-analytics-core:1.10.1"
+            runtime("org.pillarone:risk-analytics-commons:1.10.1") { transitive = false }
         }
     }
 
@@ -44,8 +44,8 @@ grails.project.dependency.resolution = {
         }
     }
 }
-//grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core"
-//grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons"
+//grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core-release-1.10"
+//grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons-release-1.10"
 
 grails.project.repos.default = "pillarone"
 
@@ -70,6 +70,7 @@ grails.project.dependency.distribution = {
     	}
 
     } catch (Throwable t) {
+        println "Error (deployInfo.properties not found in userhome?): ${t.message}"
     }
 }
 
