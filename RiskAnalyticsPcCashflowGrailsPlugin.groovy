@@ -8,6 +8,7 @@ import org.pillarone.riskanalytics.core.util.ResourceBundleRegistry
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket as CCP
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimPacketAggregator
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimTypeSelectionTableConstraints
+import org.pillarone.riskanalytics.domain.pc.cf.claim.SingleValuePacketWithClaimRoot
 import org.pillarone.riskanalytics.domain.pc.cf.claim.allocation.validation.RiskAllocationValidator
 import org.pillarone.riskanalytics.domain.pc.cf.claim.generator.validation.ClaimsGeneratorScalingValidator
 import org.pillarone.riskanalytics.domain.pc.cf.claim.generator.validation.PMLClaimsGeneratorStrategyValidator
@@ -162,7 +163,7 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         //Rationale: My bet here is that the part of Artisan/P1 programmed by smart people would show options in
         //simulation collection templates based on which collectors are compatible to each channel, using the compatible
         //packet list specified here in the third parameter. -- after trying, it appears to be so
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[] ,[SingleValuePacket]))
+        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [], [SingleValuePacketWithClaimRoot]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.CHANGE_IN_RESERVES] ,[CDP]))

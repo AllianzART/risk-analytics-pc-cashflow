@@ -22,6 +22,7 @@ import org.pillarone.riskanalytics.core.simulation.item.Simulation;
 import org.pillarone.riskanalytics.core.util.Manual;
 import org.pillarone.riskanalytics.core.util.PeriodLabelsUtil;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
+import org.pillarone.riskanalytics.domain.pc.cf.claim.SingleValuePacketWithClaimRoot;
 import org.pillarone.riskanalytics.domain.pc.cf.exposure.UnderwritingInfoPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.ContractFinancialsPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium;
@@ -427,16 +428,16 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
 
     private String occurrencePeriodvsUpdateDate(Packet packet) {
         if( new Random(System.currentTimeMillis()).nextInt(64) < 10 ){ //Avoid too much log spam
-        LOG.warn("TODO remove evil hack and fix test (see code comment in SplitAndFilterCollectionModeStrategy.java)");
+        LOG.warn("AR-111 TODO clean up the flow here in occurrencePeriodvsUpdateDate "); //we want to remove this!
         }
         DateTime occurrenceDate = null;
         Simulation simulation = packetCollector.getSimulationScope().getSimulation();
         if(  simulation != null ){
-            DateTime updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate"));
+            DateTime updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate")); //couldn't this be set once? PA
             if (packet instanceof ClaimCashflowPacket) {
                 occurrenceDate = ((ClaimCashflowPacket) packet).getBaseClaim().getOccurrenceDate();
-              } else if (packet instanceof SingleValuePacket) {
-                occurrenceDate = ((SingleValuePacket) packet).getDate();
+              } else if (packet instanceof SingleValuePacketWithClaimRoot) {
+                occurrenceDate = ((SingleValuePacketWithClaimRoot) packet).getBaseClaimIncurredDate();
               } else if (packet instanceof ClaimDevelopmentPacket) {
                 occurrenceDate = ((ClaimDevelopmentPacket) packet).getIncurredDate();
 //            } else if (packet instanceof UnderwritingInfoPacket) {
@@ -448,8 +449,6 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
               } else {
                 throw new IllegalArgumentException("Packet type " + packet.getClass() + " not supported for split cashflow on past/future occurrence date");
             }
-
-            IPeriodCounter PC =  packetCollector.getSimulationScope().getIterationScope().getPeriodScope().getPeriodCounter();
 
             if(occurrenceDate == null ){
                 throw new IllegalArgumentException("Null occurrenceDate" );
@@ -466,7 +465,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
                 return "From Future";
             }
         }else{
-            return "No Sim"; // TODO - REMOVE EVIL HACK AND FIX testCollectChanges_no_filter_split_by_period AND/OR THIS CODE
+            throw new IllegalArgumentException("No update date in simulation context"); //Evil hack that turned a blind eye on Things That Shouldn't Be turned into a Check that raises an exception - that was done for tests that this is now passing
         }
 
     }
