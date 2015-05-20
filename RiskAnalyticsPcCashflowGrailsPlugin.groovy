@@ -133,6 +133,12 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_TYPE], [], [AdditionalPremium, PaidAdditionalPremium]))
 //AR-111 BLOCK BEGIN
+
+        // This set of lines defines the available collectors shown in the dropdown in the result templates.
+        // The screen name of each entry is defined in CollectingModeStrategyResources.properties
+        // with a format like:
+        // ICollectingModeStrategy.AGGREGATE_BY_UPDATEDATE_ultimate_paidIncrementalIndexed=Agg,Split:u,_,_,Filter:ult,paid_inc
+
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [0, 3, 5, 7, 8, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [0, 3, 5, 7, 8, 10, 11, 12].collect { claimFields[it] },[CCP]))
         CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [7, 11].collect { claimFields[it] },[CCP]))
