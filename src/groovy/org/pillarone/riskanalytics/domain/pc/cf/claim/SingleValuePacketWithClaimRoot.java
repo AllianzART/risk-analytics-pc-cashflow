@@ -32,24 +32,24 @@ public class SingleValuePacketWithClaimRoot extends SingleValuePacket {
         baseIClaimRoot = null;
     }
 
-    public SingleValuePacketWithClaimRoot(IClaimRoot claim) {
+    public SingleValuePacketWithClaimRoot(IClaimRoot claim) { //Art 2
         super();
         this.baseIClaimRoot = claim;
         this.baseClaim = null;
     }
 
-    public SingleValuePacketWithClaimRoot(Claim claim) {
+    public SingleValuePacketWithClaimRoot(Claim claim) { //Art 1
         super();
         this.baseClaim = claim;
         this.baseIClaimRoot = null;
     }
 
-    public SingleValuePacketWithClaimRoot(ClaimCashflowPacket claimCashflow) {
+    public SingleValuePacketWithClaimRoot(ClaimCashflowPacket claimCashflow) { //Art 2
         this(claimCashflow.getBaseClaim());
         this.setDate(claimCashflow.getDate());
     }
 
-    public SingleValuePacketWithClaimRoot(ClaimDevelopmentPacket claimDevelopmentP) {
+    public SingleValuePacketWithClaimRoot(ClaimDevelopmentPacket claimDevelopmentP) { //Art 1
         this(claimDevelopmentP.getOriginalClaim());
         this.setDate(claimDevelopmentP.getDate());
     }
