@@ -23,7 +23,7 @@ import org.pillarone.riskanalytics.domain.pc.cf.output.*
 import org.pillarone.riskanalytics.domain.pc.cf.pattern.PatternTableConstraints
 import org.pillarone.riskanalytics.domain.pc.cf.pattern.validation.PatternStrategyValidator
 import org.pillarone.riskanalytics.domain.pc.cf.pattern.validation.RecoveryPatternStrategyValidator
-import org.pillarone.riskanalytics.domain.pc.cf.output.SplitAndFilterCollectionModeStrategy
+import org.pillarone.riskanalytics.domain.pc.cf.output.AggregateSplitAndFilterCollectionModeStrategy
 import org.pillarone.riskanalytics.domain.pc.cf.output.SingleSplitAndFilterCollectingModeStrategy
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.ContractFinancialsPacket
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium
@@ -97,42 +97,42 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
                 CCP.CHANGES_IN_OUTSTANDING_INDEXED, CCP.OUTSTANDING_INDEXED, CCP.REPORTED_INDEXED, CCP.REPORTED_CUMULATIVE_INDEXED, CCP.ULTIMATE, CCP.TOTAL_INCREMENTAL_INDEXED,
                 CCP.TOTAL_CUMULATIVE_INDEXED, CCP.PREMIUM_RISK_BASE, CCP.RESERVE_RISK_BASE, CCP.PREMIUM_AND_RESERVE_RISK_BASE]
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], []))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], []))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], []))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], []))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [0, 3, 5, 7, 8, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [0, 3, 5, 7, 8, 10, 11, 12].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [7, 11].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [7, 11].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [7, 11].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [7, 11].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [7, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], []))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], []))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], []))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], []))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [0, 3, 5, 7, 8, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [0, 3, 5, 7, 8, 10, 11, 12].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [7, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_PREMIUM_RISK,FP.GROSS_RESERVE_RISK,FP.GROSS_PREMIUM_RESERVE_RISK], [FP],"FIN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [FP.GROSS_PREMIUM_RISK,FP.GROSS_RESERVE_RISK,FP.GROSS_PREMIUM_RESERVE_RISK], [FP],"FIN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [], [FP,ContractFinancialsPacket],"FIN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [], [FP,ContractFinancialsPacket],"FIN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_PREMIUM_RISK,FP.GROSS_RESERVE_RISK,FP.GROSS_PREMIUM_RESERVE_RISK], [FP],"FIN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [FP.GROSS_PREMIUM_RISK,FP.GROSS_RESERVE_RISK,FP.GROSS_PREMIUM_RESERVE_RISK], [FP],"FIN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [], [FP,ContractFinancialsPacket],"FIN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [], [FP,ContractFinancialsPacket],"FIN"))
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK], [FP],"GNC"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK], [FP],"GN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK], [FP],"GN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK], [FP],"GNC"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK], [FP],"GNC"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK], [FP],"GN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK], [FP],"GN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK], [FP],"GNC"))
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN, FP.CEDED_PREMIUM_WRITTEN], [FP],"GNC"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN], [FP],"GN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN], [FP],"GN"))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN, FP.CEDED_PREMIUM_WRITTEN], [FP],"GNC"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN, FP.CEDED_PREMIUM_WRITTEN], [FP],"GNC"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN], [FP],"GN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN], [FP],"GN"))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [FP.GROSS_RESERVE_RISK, FP.GROSS_PREMIUM_RISK, FP.GROSS_PREMIUM_RESERVE_RISK, FP.NET_RESERVE_RISK, FP.NET_PREMIUM_RISK, FP.NET_PREMIUM_RESERVE_RISK, FP.CEDED_RESERVE_RISK, FP.CEDED_PREMIUM_RISK, FP.CEDED_PREMIUM_RESERVE_RISK, FP.GROSS_PREMIUM_WRITTEN, FP.NET_PREMIUM_WRITTEN, FP.CEDED_PREMIUM_WRITTEN], [FP],"GNC"))
 
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_TYPE], [], [AdditionalPremium, PaidAdditionalPremium]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_PERIOD], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_TYPE], [], [AdditionalPremium, PaidAdditionalPremium]))
 //AR-111 BLOCK BEGIN
 
         // This set of lines defines the available collectors shown in the dropdown in the result templates.
@@ -140,25 +140,25 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         // with a format like:
         // ICollectingModeStrategy.AGGREGATE_BY_UPDATEDATE_ultimate_paidIncrementalIndexed=Agg,Split:u,_,_,Filter:ult,paid_inc
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [0, 3, 5, 7, 8, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [0, 3, 5, 7, 8, 10, 11, 12].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [7, 11].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [7, 11].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [0, 3, 5, 7, 8, 10, 11, 12, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [0, 3, 5, 7, 8, 10, 11, 12].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [7, 11].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [7, 11, 13, 14, 15].collect { claimFields[it] },[CCP]))
 
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [CCP.ULTIMATE, CCP.PAID_INDEXED],[CCP]))
 
 
         //Artisan 1 attempt
         //Rationale: My bet here is that the part of Artisan/P1 programmed by smart people would show options in
         //simulation collection templates based on which collectors are compatible to each channel, using the compatible
         //packet list specified here in the third parameter. -- after trying, it appears to be so
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [], [SingleValuePacketWithClaimRoot]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.CHANGE_IN_RESERVES] ,[CDP]))
-        CollectingModeFactory.registerStrategy(new SplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [], [SingleValuePacketWithClaimRoot]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.CHANGE_IN_RESERVES] ,[CDP]))
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
 
         CollectingModeFactory.registerStrategy(new SingleSplitAndFilterCollectingModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
     //AR-111 BLOCK END
