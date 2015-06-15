@@ -23,7 +23,6 @@ import org.pillarone.riskanalytics.domain.pc.cf.claim.generator.ClaimsGenerator
 import org.pillarone.riskanalytics.domain.pc.cf.segment.Segment
 import org.pillarone.riskanalytics.core.output.DrillDownMode
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium
-import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.APBasis
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.contracts.StatelessRIContract
 import org.pillarone.riskanalytics.domain.utils.marker.IReinsuranceContractMarker
 import org.pillarone.riskanalytics.core.packets.Packet
@@ -33,7 +32,7 @@ import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.a
  * @author detlef.brendle (at) canoo (dot) com
  */
 class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
-    SplitAndFilterCollectionModeStrategy strategy
+    AggregateSplitAndFilterCollectionModeStrategy strategy
 
     private void setupStrategy(List<DrillDownMode> splitModes = [], List<String> fieldFilter = [], def simulationStart = new DateTime(System.currentTimeMillis())) {
         setupStrategy(splitModes, fieldFilter, simulationStart, [])
@@ -43,7 +42,7 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         mockDomain(PathMapping)
         mockDomain(CollectorMapping)
         mockDomain(FieldMapping)
-        strategy = new SplitAndFilterCollectionModeStrategy(splitModes, fieldFilter, compatibleClasses)
+        strategy = new AggregateSplitAndFilterCollectionModeStrategy(splitModes, fieldFilter, compatibleClasses)
         PacketCollector packetCollector = new PacketCollector(strategy)
         packetCollector.setPath("Path:to:collect")
         SimulationScope simulationScope = new SimulationScope()
@@ -188,7 +187,7 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
     }
 
     void testIdentifier(){
-        strategy = new SplitAndFilterCollectionModeStrategy()
+        strategy = new AggregateSplitAndFilterCollectionModeStrategy()
         assert 'AGGREGATE_NO-SPLIT_NO-FILTER' == strategy.identifier
         setupStrategy()
         assert 'AGGREGATE_NO-SPLIT_NO-FILTER' == strategy.identifier

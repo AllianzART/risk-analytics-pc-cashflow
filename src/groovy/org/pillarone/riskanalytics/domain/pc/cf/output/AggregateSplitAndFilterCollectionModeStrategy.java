@@ -16,7 +16,6 @@ import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
 import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
 import org.pillarone.riskanalytics.core.packets.SingleValuePacket;
-import org.pillarone.riskanalytics.core.packets.MultiValuePacket;
 import org.pillarone.riskanalytics.core.simulation.IPeriodCounter; //art 1? //AR-111
 import org.pillarone.riskanalytics.core.simulation.item.Simulation;
 import org.pillarone.riskanalytics.core.util.Manual;
@@ -48,8 +47,8 @@ import java.util.*;
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
 @Manual
-public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectingModeStrategy {
-    protected static Log LOG = LogFactory.getLog(SplitAndFilterCollectionModeStrategy.class);
+public class AggregateSplitAndFilterCollectionModeStrategy extends AbstractAggregateSplitCollectingModeStrategy {
+    protected static Log LOG = LogFactory.getLog(AggregateSplitAndFilterCollectionModeStrategy.class);
 
     private static final String PERILS = "claimsGenerators";
     private static final String RESERVES = "reservesGenerators";
@@ -71,23 +70,23 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
      * @param compatibleClasses overwrites compatible classes defined in super class
      * @param identifier_prefix can be null, normally used to distinguish between packet types
      */
-    public SplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses, String identifier_prefix) {
+    public AggregateSplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses, String identifier_prefix) {
         this.drillDownModes = drillDownModes;
         this.fieldFilter = fieldFilter;
         this.compatibleClasses = compatibleClasses;
         this.identifier_prefix = identifier_prefix;
     }
 
-    public SplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses) {
+    public AggregateSplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses) {
         this(drillDownModes, fieldFilter, compatibleClasses, null);
     }
 
-    public SplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter) {
+    public AggregateSplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter) {
         this(drillDownModes, fieldFilter, new ArrayList<Class<Packet>>());
     }
 
     // required for serialization by gridgain
-    public SplitAndFilterCollectionModeStrategy() {
+    public AggregateSplitAndFilterCollectionModeStrategy() {
         this(new ArrayList<DrillDownMode>(), new ArrayList<String>(), new ArrayList<Class<Packet>>());
     }
 
@@ -523,7 +522,7 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
         boolean compatibleWith = false;
         if (compatibleClasses.size() > 0) {
             for (Class<Packet> compatibleClass : compatibleClasses) {
-                compatibleWith |= compatibleClass.isAssignableFrom(packetClass);
+                compatibleWith ||= compatibleClass.isAssignableFrom(packetClass);
             }
             return compatibleWith;
         } else {
@@ -546,11 +545,11 @@ public class SplitAndFilterCollectionModeStrategy extends AbstractSplitCollectin
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SplitAndFilterCollectionModeStrategy))
+        if (!(o instanceof AggregateSplitAndFilterCollectionModeStrategy))
             return false;
 
-        SplitAndFilterCollectionModeStrategy that =
-                (SplitAndFilterCollectionModeStrategy) o;
+        AggregateSplitAndFilterCollectionModeStrategy that =
+                (AggregateSplitAndFilterCollectionModeStrategy) o;
 
         if (compatibleClasses != null ?
                 !compatibleClasses.equals(that.compatibleClasses) :

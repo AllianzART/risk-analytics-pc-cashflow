@@ -24,9 +24,9 @@ import java.util.*;
  * This collecting mode strategy splits claim and underwriting information up by inception date.
  *
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
- * @deprecated Use general {@link SplitAndFilterCollectionModeStrategy} class for collecting results.
+ * @deprecated Use general {@link AggregateSplitAndFilterCollectionModeStrategy} class for collecting results.
  */
-public class AggregateSplitByInceptionDateCollectingModeStrategy extends AbstractSplitCollectingModeStrategy {
+public class AggregateSplitByInceptionDateCollectingModeStrategy extends AbstractAggregateSplitCollectingModeStrategy {
 
     protected static Log LOG = LogFactory.getLog(AggregateSplitByInceptionDateCollectingModeStrategy.class);
 
