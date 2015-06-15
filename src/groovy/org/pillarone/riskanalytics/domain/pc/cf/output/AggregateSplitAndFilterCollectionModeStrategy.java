@@ -522,7 +522,7 @@ public class AggregateSplitAndFilterCollectionModeStrategy extends AbstractAggre
         boolean compatibleWith = false;
         if (compatibleClasses.size() > 0) {
             for (Class<Packet> compatibleClass : compatibleClasses) {
-                compatibleWith ||= compatibleClass.isAssignableFrom(packetClass);
+                compatibleWith |= compatibleClass.isAssignableFrom(packetClass);
             }
             return compatibleWith;
         } else {

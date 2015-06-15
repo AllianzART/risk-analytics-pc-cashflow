@@ -27,7 +27,7 @@ import java.util.*;
  */
 abstract public class AbstractSingleSplitCollectingModeStrategy implements ICollectingModeStrategy {
 
-        protected static Log LOG = LogFactory.getLog(AbstractSplitCollectingModeStrategy.class);
+        protected static Log LOG = LogFactory.getLog(AbstractSingleSplitCollectingModeStrategy.class);
 
         protected static final String RESOURCE_BUNDLE = "org.pillarone.riskanalytics.domain.pc.cf.output.CollectingModeStrategyResources";
         protected static final String PATH_SEPARATOR = ":";
