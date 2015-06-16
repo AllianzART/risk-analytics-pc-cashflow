@@ -24,9 +24,9 @@ import java.util.*;
  *
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
-public class AggregateSplitPerSourceCollectingModeStrategy extends AbstractAggregateSplitCollectingModeStrategy {
+public class AggregateSplitPerSourceCollectionModeStrategy extends AbstractAggregateSplitCollectionModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(AggregateSplitPerSourceCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(AggregateSplitPerSourceCollectionModeStrategy.class);
 
     static final String IDENTIFIER = "SPLIT_PER_SOURCE";
     private static final String PERILS = "claimsGenerators";

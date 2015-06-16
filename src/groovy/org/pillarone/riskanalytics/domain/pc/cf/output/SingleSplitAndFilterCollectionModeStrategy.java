@@ -15,7 +15,6 @@ import org.pillarone.riskanalytics.core.output.PathMapping;
 import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
 import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
-import org.pillarone.riskanalytics.core.packets.SingleValuePacket;
 import org.pillarone.riskanalytics.core.simulation.IPeriodCounter;
 import org.pillarone.riskanalytics.core.simulation.item.Simulation;
 import org.pillarone.riskanalytics.core.util.PeriodLabelsUtil;
@@ -42,9 +41,9 @@ import java.util.*;
  * Time: 14:50
  * To change this template use File | Settings | File Templates.
  */
-public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSplitCollectingModeStrategy {
+public class SingleSplitAndFilterCollectionModeStrategy extends AbstractSingleSplitCollectionModeStrategy {
  
-    protected static Log LOG = LogFactory.getLog(SingleSplitAndFilterCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(SingleSplitAndFilterCollectionModeStrategy.class);
 
     private static final String PERILS = "claimsGenerators";
     private static final String RESERVES = "reservesGenerators";
@@ -66,23 +65,23 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
      * @param compatibleClasses overwrites compatible classes defined in super class
      * @param identifier_prefix can be null, normally used to distinguish between packet types
      */
-    public SingleSplitAndFilterCollectingModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses, String identifier_prefix) {
+    public SingleSplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses, String identifier_prefix) {
         this.drillDownModes = drillDownModes;
         this.fieldFilter = fieldFilter;
         this.compatibleClasses = compatibleClasses;
         this.identifier_prefix = identifier_prefix;
     }
 
-    public SingleSplitAndFilterCollectingModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses) {
+    public SingleSplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter, List<Class<Packet>> compatibleClasses) {
         this(drillDownModes, fieldFilter, compatibleClasses, null);
     }
 
-    public SingleSplitAndFilterCollectingModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter) {
+    public SingleSplitAndFilterCollectionModeStrategy(List<DrillDownMode> drillDownModes, List<String> fieldFilter) {
         this(drillDownModes, fieldFilter, new ArrayList<Class<Packet>>());
     }
 
     // required for serialization by gridgain
-    public SingleSplitAndFilterCollectingModeStrategy() {
+    public SingleSplitAndFilterCollectionModeStrategy() {
         this(new ArrayList<DrillDownMode>(), new ArrayList<String>(), new ArrayList<Class<Packet>>());
     }
 
@@ -118,9 +117,9 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
 //                resultMap.putAll(splitBySourePathsForUwInfos(packets));
            }
         }
-//        if (drillDownModes.contains(DrillDownMode.BY_PERIOD)) {
-//            resultMap.putAll(splitByInceptionPeriodPaths(packets));
-//        }
+        if (drillDownModes.contains(DrillDownMode.BY_PERIOD)) {
+            resultMap.putAll(splitByInceptionPeriodPaths(packets));
+        }
         if (drillDownModes.contains(DrillDownMode.BY_UPDATEDATE)) {
             resultMap.putAll(splitByOccurrenceAgainstUpdateDatePaths(packets));
         }
@@ -136,6 +135,7 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
 */
         return resultMap;
     }
+/* //uncomment this functions when uncommenting the DrillDownMode.BY_TYPE case above
 
     private Map<PathMapping, Packet> splitByAdditionalPremium(PacketList<Packet> packets) {
         Map<PathMapping, Packet> tempMap = Maps.newLinkedHashMap();
@@ -166,7 +166,7 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
         }
         return tempMap;
     }
-
+*/
     /**
      * @param claims
      * @return a map with paths as key
@@ -343,7 +343,22 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
                 packetList.add(packet);
                 resultMap.put(path, packetList);
             } else {
-                LOG.info("Dropping packet (no path!) Sender: " + packet.getSender() + ", sender channel: " + packet.getSenderChannelName() + ")" );
+
+                String sender = "N/A";
+                String channel = "N/A";
+                try{
+                    sender = "" + packet.getSender();
+                }catch(Exception e){
+                    //nb Should not allow missing sender or channel to prevent logging of missing path!
+                    //hence exceptions not rethrown
+                }
+                try{
+                    channel = packet.getSenderChannelName();
+                }catch(Exception e){
+                    //nb Should not allow missing sender or channel to prevent logging of missing path!
+                    //hence exceptions not rethrown
+                }
+                LOG.info("Dropping packet (no path!) Sender: " + sender + ", sender channel: " + channel + ")" );
             }
 
 //        } else  {
@@ -518,11 +533,11 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SingleSplitAndFilterCollectingModeStrategy))
+        if (!(o instanceof SingleSplitAndFilterCollectionModeStrategy))
             return false;
 
-        SingleSplitAndFilterCollectingModeStrategy that =
-                (SingleSplitAndFilterCollectingModeStrategy) o;
+        SingleSplitAndFilterCollectionModeStrategy that =
+                (SingleSplitAndFilterCollectionModeStrategy) o;
 
         if (compatibleClasses != null ?
                 !compatibleClasses.equals(that.compatibleClasses) :

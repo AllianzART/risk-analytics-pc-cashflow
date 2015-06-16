@@ -31,7 +31,11 @@ import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.a
 /**
  * @author detlef.brendle (at) canoo (dot) com
  */
-class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
+
+
+//TODO Build 'Single' corresponding test class
+//
+class AggregateSplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
     AggregateSplitAndFilterCollectionModeStrategy strategy
 
     private void setupStrategy(List<DrillDownMode> splitModes = [], List<String> fieldFilter = [], def simulationStart = new DateTime(System.currentTimeMillis())) {

@@ -24,7 +24,7 @@ import org.pillarone.riskanalytics.domain.pc.cf.pattern.PatternTableConstraints
 import org.pillarone.riskanalytics.domain.pc.cf.pattern.validation.PatternStrategyValidator
 import org.pillarone.riskanalytics.domain.pc.cf.pattern.validation.RecoveryPatternStrategyValidator
 import org.pillarone.riskanalytics.domain.pc.cf.output.AggregateSplitAndFilterCollectionModeStrategy
-import org.pillarone.riskanalytics.domain.pc.cf.output.SingleSplitAndFilterCollectingModeStrategy
+import org.pillarone.riskanalytics.domain.pc.cf.output.SingleSplitAndFilterCollectionModeStrategy
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.ContractFinancialsPacket
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.PaidAdditionalPremium
@@ -160,7 +160,7 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.CHANGE_IN_RESERVES] ,[CDP]))
         CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
 
-        CollectingModeFactory.registerStrategy(new SingleSplitAndFilterCollectingModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
+        CollectingModeFactory.registerStrategy(new SingleSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
     //AR-111 BLOCK END
     }
 

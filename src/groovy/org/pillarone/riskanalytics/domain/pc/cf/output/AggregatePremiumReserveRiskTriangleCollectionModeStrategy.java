@@ -10,18 +10,14 @@ import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  * @deprecated Use general {@link AggregateSplitAndFilterCollectionModeStrategy} class for collecting results.
  */
-public class AggregatePremiumReserveRiskCollectingModeStrategy extends AggregateSplitByInceptionDateCollectingModeStrategy {
+public class AggregatePremiumReserveRiskTriangleCollectionModeStrategy extends AggregateSplitByInceptionDateCollectionModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(AggregatePremiumReserveRiskCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(AggregatePremiumReserveRiskTriangleCollectionModeStrategy.class);
 
-    static final String IDENTIFIER = "PREMIUM_RESERVE_RISK";
+    static final String IDENTIFIER = "PREMIUM_RESERVE_RISK_TRIANGLE";
 
     @Override
     protected boolean includeDefaultClaimsProperties() {
-        return false;
-    }
-
-    protected boolean splitByInceptionPeriod() {
         return false;
     }
 

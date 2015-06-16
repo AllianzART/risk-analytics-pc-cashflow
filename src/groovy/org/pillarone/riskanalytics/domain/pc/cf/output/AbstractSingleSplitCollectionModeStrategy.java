@@ -13,7 +13,6 @@ import org.pillarone.riskanalytics.core.simulation.SimulationException;
 import org.pillarone.riskanalytics.core.simulation.engine.MappingCache;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.exposure.UnderwritingInfoPacket;
-import org.pillarone.riskanalytics.domain.pc.reserves.cashflow.ClaimDevelopmentPacket;
 import org.pillarone.riskanalytics.domain.utils.marker.ComposedMarkerKey;
 
 import java.util.*;
@@ -25,9 +24,9 @@ import java.util.*;
  * Time: 14:36
  * To change this template use File | Settings | File Templates.
  */
-abstract public class AbstractSingleSplitCollectingModeStrategy implements ICollectingModeStrategy {
+abstract public class AbstractSingleSplitCollectionModeStrategy implements ICollectingModeStrategy {
 
-        protected static Log LOG = LogFactory.getLog(AbstractSingleSplitCollectingModeStrategy.class);
+        protected static Log LOG = LogFactory.getLog(AbstractSingleSplitCollectionModeStrategy.class);
 
         protected static final String RESOURCE_BUNDLE = "org.pillarone.riskanalytics.domain.pc.cf.output.CollectingModeStrategyResources";
         protected static final String PATH_SEPARATOR = ":";

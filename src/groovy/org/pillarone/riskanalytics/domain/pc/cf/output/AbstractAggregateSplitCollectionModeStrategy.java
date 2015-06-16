@@ -21,9 +21,9 @@ import java.util.*;
  *
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
-abstract public class AbstractAggregateSplitCollectingModeStrategy implements ICollectingModeStrategy {
+abstract public class AbstractAggregateSplitCollectionModeStrategy implements ICollectingModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(AbstractAggregateSplitCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(AbstractAggregateSplitCollectionModeStrategy.class);
 
     protected static final String RESOURCE_BUNDLE = "org.pillarone.riskanalytics.domain.pc.cf.output.CollectingModeStrategyResources";
     protected static final String PATH_SEPARATOR = ":";

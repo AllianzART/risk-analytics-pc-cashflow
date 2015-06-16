@@ -47,7 +47,7 @@ import java.util.*;
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
 @Manual
-public class AggregateSplitAndFilterCollectionModeStrategy extends AbstractAggregateSplitCollectingModeStrategy {
+public class AggregateSplitAndFilterCollectionModeStrategy extends AbstractAggregateSplitCollectionModeStrategy {
     protected static Log LOG = LogFactory.getLog(AggregateSplitAndFilterCollectionModeStrategy.class);
 
     private static final String PERILS = "claimsGenerators";

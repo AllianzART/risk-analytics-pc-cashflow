@@ -15,9 +15,9 @@ import java.util.*;
  *
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
-public class SingleSplitByInceptionDateCollectingModeStrategy extends AggregateSplitByInceptionDateCollectingModeStrategy {
+public class SingleSplitByInceptionDateCollectionModeStrategy extends AggregateSplitByInceptionDateCollectionModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(SingleSplitByInceptionDateCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(SingleSplitByInceptionDateCollectionModeStrategy.class);
 
     static final String IDENTIFIER = "SPLIT_BY_INCEPTION_DATE_WITH_SINGLE_AVAILABLE";
 

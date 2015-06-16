@@ -26,9 +26,9 @@ import java.util.*;
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  * @deprecated Use general {@link AggregateSplitAndFilterCollectionModeStrategy} class for collecting results.
  */
-public class AggregateSplitByInceptionDateCollectingModeStrategy extends AbstractAggregateSplitCollectingModeStrategy {
+public class AggregateSplitByInceptionDateCollectionModeStrategy extends AbstractAggregateSplitCollectionModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(AggregateSplitByInceptionDateCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(AggregateSplitByInceptionDateCollectionModeStrategy.class);
 
     static final String IDENTIFIER = "SPLIT_BY_INCEPTION_DATE";
 
