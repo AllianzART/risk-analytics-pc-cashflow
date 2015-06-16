@@ -305,66 +305,54 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
     }
 
 
+//    protected void addToMap(ClaimCashflowPacket claim, PathMapping path, Map<PathMapping, List<Packet>> resultMap) {
+//        if (path == null) return;
+//        List<Packet> packetList;
+//        if (resultMap.containsKey(path)) {
+//            packetList =  resultMap.get(path);
+//        } else {
+//            packetList = new PacketList<Packet>();
+//        }
+//        packetList.add(claim);
+//        resultMap.put(path, packetList);
+//    }
+
+    // Note: list of "compatibleClasses" has already been checked before we get here.
+    //
+    // In case of single packet collectors the kind of packet doesnt matter as no packet-specific behaviour (ie
+    // aggregation) needs to discriminate the packet types. But for other collectors we may need to check the types as in
+    // the commented code below, and throw exception for unsupported packets types.
+    // As Paolo notes, we should even there be able to use a better approach by factoring out an interface or using
+    // better object oriented design.
     protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, List<Packet>> resultMap) {
-        //can't we just check against the list of compatible classes instead of doing this?
-        if (packet instanceof ClaimCashflowPacket) {
-            addToMap((ClaimCashflowPacket) packet, path, resultMap);
-        } else {
-            throw new IllegalArgumentException("Packet type " + packet.getClass() + " is not supported.");
-        }
+
+//
+//        if( (packet instanceof ClaimCashflowPacket) || (packet instanceof ClaimDevelopmentPacket) ) {
+
+// Note 2: as this is called once per packet ie EXTREMELY frequetnly, any speedup is very useful, so dropping the instanceof checks is a GOOD THING
+
+            if(path != null){
+                List<Packet> packetList;
+                // TODO use eg guava or spring map that will automatically create a missing entry on access
+                //
+                if (resultMap.containsKey(path)) {
+                    packetList =  resultMap.get(path);
+                } else {
+                    packetList = new PacketList<Packet>();
+                }
+                packetList.add(packet);
+                resultMap.put(path, packetList);
+            } else {
+                LOG.info("Dropping packet (no path!) Sender: " + packet.getSender() + ", sender channel: " + packet.getSenderChannelName() + ")" );
+            }
+
+//        } else  {
+//            throw new IllegalArgumentException("Packet type " + packet.getClass() + " is not supported.");
+//        }
     }
 
-    protected void addToMap(AdditionalPremium additionalPremium, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.get(path) == null) {
-            resultMap.put(path, additionalPremium);
-        } else {
-            AdditionalPremium aggregateMe = (AdditionalPremium) resultMap.get(path);
-            resultMap.put(path, aggregateMe.plusForAggregateCollection(additionalPremium));
-        }
-    }
-    protected void addToMap(PaidAdditionalPremium additionalPremium, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.get(path) == null) {
-            resultMap.put(path, additionalPremium);
-        } else {
-            PaidAdditionalPremium aggregateMe = (PaidAdditionalPremium) resultMap.get(path);
-            resultMap.put(path, aggregateMe.plusForAggregateCollection(additionalPremium));
-        }
-    }
+    // Other overloads of addToMap have not been kept - see AggregateSplitAndFilterCollectionModeStrategy if you need to get hold of copies
 
-    protected void addToMap(ContractFinancialsPacket packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.containsKey(path)) {
-            ContractFinancialsPacket aggregatePacket = (ContractFinancialsPacket) resultMap.get(path);
-            aggregatePacket.plus(packet);
-            resultMap.put(path, aggregatePacket);
-        } else {
-            resultMap.put(path, packet.copy());
-        }
-    }
-
-    protected void addToMap(FinancialsPacket packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.containsKey(path)) {
-            FinancialsPacket aggregatePacket = (FinancialsPacket) resultMap.get(path);
-            aggregatePacket.plus(packet);
-            resultMap.put(path, aggregatePacket);
-        } else {
-            resultMap.put(path, packet.copy());
-        }
-    }
-
-    protected void addToMap(SingleValuePacket packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.containsKey(path)) {
-            SingleValuePacket aggregatePacket = (SingleValuePacket) resultMap.get(path);
-            aggregatePacket.value += packet.value;
-            resultMap.put(path, aggregatePacket);
-        } else {
-            resultMap.put(path, packet.copy());
-        }
-    }
     /**
      * @param packet
      * @return path extended by period:inceptionPeriod, the later being built using inceptionPeriod(packet)
@@ -421,12 +409,12 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
                 occurrenceDate = ((SingleValuePacketWithClaimRoot) packet).getBaseClaimIncurredDate();
             } else if (packet instanceof ClaimDevelopmentPacket) {
                 occurrenceDate = ((ClaimDevelopmentPacket) packet).getIncurredDate();
-//            } else if (packet instanceof UnderwritingInfoPacket) {
-//              date = ((UnderwritingInfoPacket) packet).getExposure().getInceptionDate();
-//            } else if (packet instanceof ContractFinancialsPacket) {
-//              date = ((ContractFinancialsPacket) packet).getInceptionDate();
-//            } else if (packet instanceof FinancialsPacket) {
-//               date = ((FinancialsPacket) packet).getInceptionDate();
+//          } else if (packet instanceof UnderwritingInfoPacket) {
+//            date = ((UnderwritingInfoPacket) packet).getExposure().getInceptionDate();
+//          } else if (packet instanceof ContractFinancialsPacket) {
+//            date = ((ContractFinancialsPacket) packet).getInceptionDate();
+//          } else if (packet instanceof FinancialsPacket) {
+//             date = ((FinancialsPacket) packet).getInceptionDate();
             } else {
                 throw new IllegalArgumentException("Packet type " + packet.getClass() + " not supported for split cashflow on past/future occurrence date");
             }
@@ -446,7 +434,10 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
                 return "From Future";
             }
         }else{
-            throw new IllegalArgumentException("No update date in simulation context"); //Evil hack that turned a blind eye on Things That Shouldn't Be turned into a Check that raises an exception - that was done for tests that this is now passing
+            // Some test was passing in a hollow object with no sim (and hence no update date).
+            //
+            // - that was done for tests that this is now passing
+            throw new IllegalArgumentException("No update date in simulation context");
         }
 
     }

@@ -78,7 +78,7 @@ abstract public class AbstractSingleSplitCollectingModeStrategy implements IColl
                         result.setDate(packet.getDate());
                         result.setPath(path);
                         if (firstPath) {    // todo(sku): might be completely removed
-                            result.setCollector(mappingCache.lookupCollector("AGGREGATED"));
+                            result.setCollector(mappingCache.lookupCollector("AGGREGATED")); //nb this is not necessarily an error in context of Single Split
                         }
                         else {
                             result.setCollector(mappingCache.lookupCollector(getIdentifier()));
@@ -175,21 +175,8 @@ abstract public class AbstractSingleSplitCollectingModeStrategy implements IColl
             return packetCollector.getPath().substring(0, separatorPositionBeforeChannel);
         }
 
-        protected void addToMap(ClaimCashflowPacket claim, PathMapping path, Map<PathMapping, List<Packet>> resultMap) {
-            if (path == null) return;
-            List<Packet> packetList;
-            if (resultMap.containsKey(path)) {
-                packetList =  resultMap.get(path);
-            } else {
-                packetList = new PacketList<Packet>();
-            }
-            packetList.add(claim);
-            resultMap.put(path, packetList);
-        }
-
-
         protected String getExtendedPath(Packet packet, String pathExtension) {
-            if (pathExtension == null) return null;
+            if (pathExtension == null) { return null; }
             StringBuilder composedPath = new StringBuilder(componentPath);
             composedPath.append(PATH_SEPARATOR);
             composedPath.append(pathExtension);
