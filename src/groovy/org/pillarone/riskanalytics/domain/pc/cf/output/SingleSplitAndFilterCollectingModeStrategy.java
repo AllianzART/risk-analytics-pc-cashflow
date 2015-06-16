@@ -428,10 +428,10 @@ public class SingleSplitAndFilterCollectingModeStrategy extends AbstractSingleSp
 
             if (occurrenceDate.isBefore(updateDate)) {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem
-                return "From Past";
+                return DrillDownMode.fromPastName;
             } else {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
-                return "From Future";
+                return DrillDownMode.fromFutureName;
             }
         }else{
             // Some test was passing in a hollow object with no sim (and hence no update date).

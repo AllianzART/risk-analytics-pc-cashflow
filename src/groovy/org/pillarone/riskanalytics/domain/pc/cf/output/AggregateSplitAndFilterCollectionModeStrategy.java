@@ -458,10 +458,10 @@ public class AggregateSplitAndFilterCollectionModeStrategy extends AbstractAggre
 
             if (occurrenceDate.isBefore(updateDate)) {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem
-                return "From Past";
+                return DrillDownMode.BY_UPDATEDATE.fromPastName;
             } else {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
-                return "From Future";
+                return DrillDownMode.fromFutureName;
             }
         }else{
             throw new IllegalArgumentException("No update date in simulation context"); //Evil hack that turned a blind eye on Things That Shouldn't Be turned into a Check that raises an exception - that was done for tests that this is now passing
