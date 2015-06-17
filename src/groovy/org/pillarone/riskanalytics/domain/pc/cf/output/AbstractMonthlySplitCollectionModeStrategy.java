@@ -47,9 +47,6 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
         markerPaths = new HashMap<IComponentMarker, PathMapping>();
         markerComposedPaths = new HashMap<ComposedMarkerKey, PathMapping>();
         mappingCache = packetCollector.getSimulationScope().getMappingCache();
-
-        packetCollector.getSimulationScope().getIterationScope().
-
     }
 
     abstract public List<SingleValueResultPOJO> collect(PacketList packets, boolean crashSimulationOnError) throws IllegalAccessException;
