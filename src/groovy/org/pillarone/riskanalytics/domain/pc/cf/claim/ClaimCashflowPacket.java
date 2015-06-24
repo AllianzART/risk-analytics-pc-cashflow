@@ -1,11 +1,14 @@
 package org.pillarone.riskanalytics.domain.pc.cf.claim;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.pillarone.riskanalytics.core.components.Component;
 import org.pillarone.riskanalytics.core.components.IComponentMarker;
 import org.pillarone.riskanalytics.core.packets.MultiValuePacket;
+import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.simulation.IPeriodCounter;
 import org.pillarone.riskanalytics.core.simulation.NotInProjectionHorizon;
 import org.pillarone.riskanalytics.core.simulation.engine.PeriodScope;
@@ -19,6 +22,7 @@ import org.pillarone.riskanalytics.domain.utils.marker.IReserveMarker;
 import org.pillarone.riskanalytics.domain.utils.marker.ISegmentMarker;
 import org.pillarone.riskanalytics.domain.utils.marker.IPerilMarker;
 import org.pillarone.riskanalytics.domain.utils.marker.ILegalEntityMarker;
+import org.pillarone.riskanalytics.core.packets.IAggregatableSummable;
 
 
 import java.util.*;
@@ -26,7 +30,7 @@ import java.util.*;
 /**
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
-public class ClaimCashflowPacket extends MultiValuePacket {
+public class ClaimCashflowPacket extends MultiValuePacket implements IAggregatableSummable{
 
     private static Log LOG = LogFactory.getLog(ClaimCashflowPacket.class);
 
@@ -662,4 +666,138 @@ public class ClaimCashflowPacket extends MultiValuePacket {
     public double totalCumulatedIndexed() {
         return developedUltimate();
     }
+
+    public Packet sum(Collection<Packet> claims)  {
+        //From ClaimUtils. IAggregatableSummable implementation
+
+        Iterator<Packet> iterator = claims.iterator();
+
+        if (!iterator.hasNext()) return null; //return null if empty; consistency with legacy code
+
+        ClaimCashflowPacket claim = (ClaimCashflowPacket) iterator.next();
+
+        //these were originally initialised last using the first element in the "list"
+        ClaimRoot baseClaim = new ClaimRoot(ultimate, claim.getBaseClaim());
+        DateTime updateDate = claim.getUpdateDate();
+        int updatePeriod = (claim.getUpdatePeriod() != null) ? claim.getUpdatePeriod() : 0;
+
+
+        double ultimate = claim.ultimate();
+        double nominalUltimate = claim.nominalUltimate();
+        double paidIncremental = claim.getPaidIncrementalIndexed();
+        double paidCumulated = claim.getPaidCumulatedIndexed();
+        double reportedIncremental = claim.getReportedIncrementalIndexed();
+        double reportedCumulated = claim.getReportedCumulatedIndexed();
+        double reserves = claim.reservedIndexed();
+        double appliedIndex = claim.getAppliedIndexValue();
+        double changeInReservesIndexed = claim.getChangeInReservesIndexed();
+        double changeInIBNRIndexed = claim.getChangeInIBNRIndexed();
+        double premiumRisk = claim.getPremiumRisk();
+        double reserveRisk = claim.getReserveRisk();
+
+        ClaimCashflowPacket storedFirstClaimForMarkers = claim;
+
+        for (claim = (ClaimCashflowPacket) iterator.next(); iterator.hasNext(); claim = (ClaimCashflowPacket) iterator.next()) {
+            ultimate += claim.ultimate();
+            nominalUltimate += claim.nominalUltimate();
+            paidIncremental += claim.getPaidIncrementalIndexed();
+            paidCumulated += claim.getPaidCumulatedIndexed();
+            reportedIncremental += claim.getReportedIncrementalIndexed();
+            reportedCumulated += claim.getReportedCumulatedIndexed();
+            reserves += claim.reservedIndexed();
+            appliedIndex *= claim.getAppliedIndexValue();
+            changeInReservesIndexed += claim.getChangeInReservesIndexed();
+            changeInIBNRIndexed += claim.getChangeInIBNRIndexed();
+            premiumRisk += claim.getPremiumRisk();
+            reserveRisk += claim.getReserveRisk();
+        }
+//        ClaimRoot baseClaim = new ClaimRoot(ultimate, claims.get(0).getBaseClaim()); //Done before the loop now!
+//        DateTime updateDate = claims.get(0).getUpdateDate();
+//        int updatePeriod = 0;
+//        if (claims.get(0).getUpdatePeriod() != null) {
+//            updatePeriod = claims.get(0).getUpdatePeriod();
+//        }
+
+        ClaimCashflowPacket summedClaims = new ClaimCashflowPacket(baseClaim, ultimate, nominalUltimate, paidIncremental,
+                paidCumulated, reportedIncremental, reportedCumulated, reserves, changeInReservesIndexed,
+                changeInIBNRIndexed, null, updateDate, updatePeriod);
+        ClaimUtils.applyMarkers(storedFirstClaimForMarkers, summedClaims); //todo: fix this too at some point. ClaimUtils is just ugly.
+        //by the way, I don't know why the first claim should be special. Just keeping this behaviour invariant to be sure.
+        summedClaims.setAppliedIndexValue(claims.size() == 0 ? 1d : Math.pow(appliedIndex, 1d / claims.size()));
+        summedClaims.setPremiumRisk(premiumRisk);
+        summedClaims.setReserveRisk(reserveRisk);
+        return summedClaims;
+    }
+
+    //TODO (dbr, sku) use method returning a map here. when doing so, check if test : AggregateSplitPerSourceCollectingModeStrategyTests works.
+    public List<Packet> aggregateByBaseClaim(Collection<Packet> claims) { //ClaimUtils port to IAggegatableSummable
+        List<Packet> aggregateByBaseClaim = new ArrayList<Packet>();
+        ListMultimap<IClaimRoot, ClaimCashflowPacket> claimsByBaseClaim = ArrayListMultimap.create();
+        for (Packet claim : claims) {
+            claimsByBaseClaim.put(((ClaimCashflowPacket) claim).getBaseClaim(), (ClaimCashflowPacket) claim);
+        }
+        for (Collection<ClaimCashflowPacket> claimsWithSameBaseClaim : claimsByBaseClaim.asMap().values()) {
+            if (claimsWithSameBaseClaim.size() == 1) {
+                aggregateByBaseClaim.add(claimsWithSameBaseClaim.iterator().next());
+            }
+            else {
+                double ultimate = 0;
+                double nominalUltimate = 0;
+                double paidIncremental = 0;
+                double paidCumulated = 0;
+                double reportedIncremental = 0;
+                double reportedCumulated = 0;
+                DateTime mostRecentClaimUpdate = null;
+                double latestReserves = 0;
+                double appliedIndex = 1;
+                double changeInReservesIndexed = 0;
+                double changeInIBNRIndexed = 0;
+                double premiumRisk = 0;
+                double reserveRisk = 0;
+                for (ClaimCashflowPacket claim : claimsWithSameBaseClaim) {
+                    ultimate += claim.ultimate();
+                    nominalUltimate = claim.nominalUltimate();  // don't sum up as every CCP contains the same value!
+                    paidIncremental += claim.getPaidIncrementalIndexed();
+                    reportedIncremental += claim.getReportedIncrementalIndexed();
+                    appliedIndex *= claim.getAppliedIndexValue();
+                    premiumRisk += claim.getPremiumRisk();
+                    reserveRisk += claim.getReserveRisk();
+                    if (mostRecentClaimUpdate == null || claim.getUpdateDate().isAfter(mostRecentClaimUpdate)) {
+                        mostRecentClaimUpdate = claim.getUpdateDate();
+                        reportedCumulated = claim.getReportedCumulatedIndexed();
+                        paidCumulated = claim.getPaidCumulatedIndexed();
+                        latestReserves = claim.reservedIndexed();
+                        changeInReservesIndexed += claim.getChangeInReservesIndexed();
+                        changeInIBNRIndexed += claim.getChangeInIBNRIndexed();
+                    }
+                }
+                IClaimRoot baseClaim = null;
+                ClaimCashflowPacket firstClaim = (ClaimCashflowPacket) claims.iterator().next();
+                if (firstClaim.getBaseClaim() instanceof GrossClaimRoot) {
+                    baseClaim = new GrossClaimRoot((GrossClaimRoot) firstClaim.getBaseClaim());
+                }
+                else {
+                    baseClaim = new ClaimRoot(ultimate, firstClaim.getBaseClaim());
+                }
+
+                int updatePeriod = 0;
+                if (firstClaim.getUpdatePeriod() != null) {
+                    updatePeriod = firstClaim.getUpdatePeriod();
+                }
+                ClaimCashflowPacket aggregateClaim = new ClaimCashflowPacket(baseClaim, ultimate, nominalUltimate,
+                        paidIncremental, paidCumulated, reportedIncremental, reportedCumulated, latestReserves,
+                        changeInReservesIndexed, changeInIBNRIndexed, null, mostRecentClaimUpdate, updatePeriod);
+                aggregateClaim.setAppliedIndexValue(appliedIndex);
+                aggregateClaim.setPremiumRisk(premiumRisk);
+                aggregateClaim.setReserveRisk(reserveRisk);
+                ClaimUtils.applyMarkers(firstClaim, aggregateClaim); //claimutils!
+                aggregateByBaseClaim.add(aggregateClaim);
+            }
+        }
+        return aggregateByBaseClaim;
+    }
+
+
+
+
 }

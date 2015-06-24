@@ -48,49 +48,12 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
         markerPaths = new HashMap<IComponentMarker, PathMapping>();
         markerComposedPaths = new HashMap<ComposedMarkerKey, PathMapping>();
         mappingCache = packetCollector.getSimulationScope().getMappingCache();
+
     }
 
     abstract public List<SingleValueResultPOJO> collect(PacketList packets, boolean crashSimulationOnError) throws IllegalAccessException;
 
-    /**
-     * Create a SingleValueResult object for each packetValue.
-     * Information about current simulation is gathered from the scopes.
-     * The key of the value map is the path.
-     *
-     * @param packets
-     * @return
-     * @throws IllegalAccessException
-     */
-    protected List<SingleValueResultPOJO> createSingleValueResults(Map<PathMapping, Packet> packets, boolean crashSimulationOnError) throws IllegalAccessException {
-        List<SingleValueResultPOJO> singleValueResults = new ArrayList<SingleValueResultPOJO>(packets.size());
-        boolean firstPath = true;
-        for (Map.Entry<PathMapping, Packet> packetEntry : packets.entrySet()) {
-            PathMapping path = packetEntry.getKey();
-            Packet packet = packetEntry.getValue();
-            for (Map.Entry<String, Number> field : filter(packet.getValuesToSave()).entrySet()) {
-                String fieldName = field.getKey();
-                Double value = (Double) field.getValue();
-                if (checkInvalidValues(fieldName, value, period, iteration, crashSimulationOnError)) continue;
-                SingleValueResultPOJO result = new SingleValueResultPOJO();
-                result.setIteration(iteration);
-                result.setPeriod(period);
-                result.setDate(packet.getDate());
-                result.setPath(path);
-                if (firstPath) {    // todo(sku): might be completely removed
-                    result.setCollector(mappingCache.lookupCollector("AGGREGATED"));
-                }
-                else {
-                    result.setCollector(mappingCache.lookupCollector(getIdentifier()));
-                }
-                result.setField(mappingCache.lookupField(fieldName));
-                result.setValueIndex(0);
-                result.setValue(value);
-                singleValueResults.add(result);
-            }
-            firstPath = false;
-        }
-        return singleValueResults;
-    }
+
 
     public boolean checkInvalidValues(String name, Double value, int period, int iteration, boolean crashSimulationOnError) {
         if (value.isInfinite() || value.isNaN()) {

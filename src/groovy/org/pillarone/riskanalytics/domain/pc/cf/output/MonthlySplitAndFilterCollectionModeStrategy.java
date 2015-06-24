@@ -13,12 +13,14 @@ import org.pillarone.riskanalytics.core.components.DynamicComposedComponent;
 import org.pillarone.riskanalytics.core.output.DrillDownMode;
 import org.pillarone.riskanalytics.core.output.PathMapping;
 import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
+import org.pillarone.riskanalytics.core.packets.IAggregatableSummable;
 import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
 import org.pillarone.riskanalytics.core.packets.SingleValuePacket;
 import org.pillarone.riskanalytics.core.simulation.IPeriodCounter;
+import org.pillarone.riskanalytics.core.simulation.engine.GlobalReportingFrequency;
+import org.pillarone.riskanalytics.core.simulation.engine.IterationScope;
 import org.pillarone.riskanalytics.core.simulation.item.Simulation;
-import org.pillarone.riskanalytics.core.util.Manual;
 import org.pillarone.riskanalytics.core.util.PeriodLabelsUtil;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.SingleValuePacketWithClaimRoot;
@@ -46,9 +48,10 @@ import java.util.*;
  *
  * Note that packets must extend from either single value packet or multi value packet in order to be collectable.
  *
- * @author paolo.albini (at) art-allianz (dot) com
+ *@author stefan.kunz (at) intuitive-collaboration (dot) com
+ *Sorry Faz, no way I'm taking credit for the somewhat confusing comments above,
+ * or the big part of the awful code below which is not mine... - P.
  */
-@Manual
 public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthlySplitCollectionModeStrategy {
     protected static Log LOG = LogFactory.getLog(MonthlySplitAndFilterCollectionModeStrategy.class);
 
@@ -65,6 +68,11 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern(PeriodLabelsUtil.PARAMETER_DISPLAY_FORMAT);
     private final List<Class<Packet>> compatibleClasses;
     private final String identifier_prefix;
+
+    private GlobalReportingFrequency reportingFrequency;
+    private List<DateTime> reportingDates;
+    private DateTime periodStart;
+    private DateTime periodEnd;
 
     /**
      * @param drillDownModes might be void
@@ -92,23 +100,104 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         this(new ArrayList<DrillDownMode>(), new ArrayList<String>(), new ArrayList<Class<Packet>>());
     }
 
+    List<Packet> flattenLists(List<List<Packet>> packetsByReportingDate,List<DateTime> reportingDates) throws IllegalArgumentException {
+
+        if (reportingDates.size() != packetsByReportingDate.size()) {
+            throw new IllegalArgumentException("Packet partition and list of reporting dates don't match");
+        }
+
+        List<Packet> result = new ArrayList<Packet>(reportingDates.size());
+
+        for (int i = 0; i < reportingDates.size(); ++i) {
+            if (packetsByReportingDate.get(i).isEmpty()) {
+                continue;
+            }
+
+            IAggregatableSummable tmp = (IAggregatableSummable) packetsByReportingDate.get(i).get(0);
+            Packet aggregatePkt = tmp.sum(tmp.aggregateByBaseClaim(packetsByReportingDate.get(i)));
+            aggregatePkt.setDate(reportingDates.get(i));
+            result.add(aggregatePkt);
+        }
+
+        return result;
+    }
+
+    /**
+     * Create a SingleValueResult object for each packetValue.
+     * Information about current simulation is gathered from the scopes.
+     * The key of the value map is the path.
+     *
+     * @param packets
+     * @return
+     * @throws IllegalAccessException
+     */
+    protected List<SingleValueResultPOJO> createSingleValueResults(Map<PathMapping, List<Packet>> packets, boolean crashSimulationOnError) throws IllegalAccessException {
+        List<SingleValueResultPOJO> singleValueResults = new ArrayList<SingleValueResultPOJO>(packets.size());
+        boolean firstPath = true;
+        for (Map.Entry<PathMapping, List<Packet>> packetEntry : packets.entrySet()) {
+            PathMapping path = packetEntry.getKey();
+            List<Packet> packetsForPath = packetEntry.getValue();
+
+            List<List<Packet>> packetsByReportingDate = reportingFrequency.PartitionByReportingDate(packetsForPath,periodStart, periodEnd);
+
+            for (Packet packet: flattenLists(packetsByReportingDate, reportingDates)) {
+
+                for (Map.Entry<String, Number> field : filter(packet.getValuesToSave()).entrySet()) {
+                    String fieldName = field.getKey();
+                    Double value = (Double) field.getValue();
+                    if (checkInvalidValues(fieldName, value, period, iteration, crashSimulationOnError)) continue;
+                    SingleValueResultPOJO result = new SingleValueResultPOJO();
+                    result.setIteration(iteration);
+                    result.setPeriod(period);
+                    result.setDate(packet.getDate());
+                    result.setPath(path);
+                    if (firstPath) {    // todo(sku): might be completely removed
+                        result.setCollector(mappingCache.lookupCollector("AGGREGATED"));
+                    }
+                    else {
+                        result.setCollector(mappingCache.lookupCollector(getIdentifier()));
+                    }
+                    result.setField(mappingCache.lookupField(fieldName));
+                    result.setValueIndex(0);
+                    result.setValue(value);
+                    singleValueResults.add(result);
+                }
+            }
+
+
+            firstPath = false;
+
+        }
+        return singleValueResults;
+    }
+
     @Override
     public List<SingleValueResultPOJO> collect(PacketList packets, boolean crashSimulationOnError) throws IllegalAccessException {
         initSimulation();
-        iteration = packetCollector.getSimulationScope().getIterationScope().getCurrentIteration();
-        period = packetCollector.getSimulationScope().getIterationScope().getPeriodScope().getCurrentPeriod();
+        IterationScope currentIterationScope = packetCollector.getSimulationScope().getIterationScope();
+        iteration = currentIterationScope.getCurrentIteration();
+        period = currentIterationScope.getPeriodScope().getCurrentPeriod();
+
+        reportingFrequency = (GlobalReportingFrequency) packetCollector.getSimulationScope().getSimulation().getParameter("runtimeReportingFrequency");
+
+        //called once per "collect" call - i.e. once per period. The cache created in the financial module could be accessed by
+        //calling packetCollector.getSimulationScope().getModel().getAllComponents() and traversing the returned list - doesn't sound more efficient...
+        //ideally the "reporting dates" should be cached somewhere accessible and related to where the parameter is set
+        // (I'd say in the Simulation or SimulationScope, as the reporting frequency is a Simulation parameter - the reason
+        // why I haven't done that is that those classes look like something that gets written in the database...)
+
 
         if (isCompatibleWith(packets.get(0).getClass())) {
-            Map<PathMapping, Packet> resultMap = allPathMappingsIncludingSplit(packets);
+            Map<PathMapping, List<Packet>> resultMap = allPathMappingsIncludingSplit(packets);
             return createSingleValueResults(resultMap, crashSimulationOnError);
         } else {
-            String incompatibleMessage = ResourceBundle.getBundle(RESOURCE_BUNDLE).getString("SplitAndFilterCollectionModeStrategy.incompatibleCollector");
+            String incompatibleMessage = ResourceBundle.getBundle(RESOURCE_BUNDLE).getString("SplitAndFilterCollectingModeStrategy.incompatibleCollector");
             throw new NotImplementedException(MessageFormat.format(incompatibleMessage, getIdentifier(), drillDownModes, fieldFilter, compatibleClasses, packets.get(0).getClass().getSimpleName()));
         }
     }
 
-    private Map<PathMapping, Packet> allPathMappingsIncludingSplit(PacketList<Packet> packets) throws IllegalAccessException {
-        Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(packets.size());
+    private Map<PathMapping, List<Packet>> allPathMappingsIncludingSplit(PacketList<Packet> packets) throws IllegalAccessException {
+        Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
         for (Packet packet : packets) {
             String originPath = packetCollector.getSimulationScope().getStructureInformation().getPath(packet);
             PathMapping path = mappingCache.lookupPath(originPath);
@@ -120,8 +209,8 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
             if (packets.get(0) instanceof ClaimCashflowPacket) {
                 resultMap.putAll(splitBySourcePathsForClaims(packets));
 //            } else if (packets.getType().equals(UnderwritingInfoPacket.class)) {
-            } else if (packets.get(0) instanceof UnderwritingInfoPacket) {
-                resultMap.putAll(splitBySourePathsForUwInfos(packets));
+//            } else if (packets.get(0) instanceof UnderwritingInfoPacket) {
+//                resultMap.putAll(splitBySourePathsForUwInfos(packets));
             }
         }
         if (drillDownModes.contains(DrillDownMode.BY_PERIOD)) {
@@ -131,7 +220,7 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
             resultMap.putAll(splitByOccurrenceAgainstUpdateDatePaths(packets));
         }
 
-        if (drillDownModes.contains(DrillDownMode.BY_TYPE)) {
+ /*       if (drillDownModes.contains(DrillDownMode.BY_TYPE)) {
             if(packets.get(0) instanceof AdditionalPremium) {
                 resultMap.putAll(splitByAdditionalPremium(packets));
             }
@@ -139,9 +228,10 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
                 resultMap.putAll(splitByPaidAdditionalPremium(packets));
             }
         }
-
+*/
         return resultMap;
     }
+/* //uncomment this functions when uncommenting the DrillDownMode.BY_TYPE case above
 
     private Map<PathMapping, Packet> splitByAdditionalPremium(PacketList<Packet> packets) {
         Map<PathMapping, Packet> tempMap = Maps.newLinkedHashMap();
@@ -177,9 +267,9 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
      * @param claims
      * @return a map with paths as key
      */
-    protected Map<PathMapping, Packet> splitBySourcePathsForClaims(PacketList<Packet> claims) {
+    protected Map<PathMapping, List<Packet>> splitBySourcePathsForClaims(PacketList<Packet> claims) {
         // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
-        Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(claims.size());
+        Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(claims.size());
         if (claims == null || claims.size() == 0) {
             return resultMap;
         }
@@ -242,7 +332,7 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         }
         return resultMap;
     }
-
+/*
     protected Map<PathMapping, Packet> splitBySourePathsForUwInfos(PacketList<Packet> underwritingInfos) {
         Map<PathMapping, Packet> resultMap = new HashMap<PathMapping, Packet>(underwritingInfos.size());
         if (underwritingInfos == null || underwritingInfos.size() == 0) {
@@ -276,14 +366,14 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         }
         return resultMap;
     }
-
+*/
     /**
      * @param packets
      * @return a map with paths as key
      */
-    protected Map<PathMapping, Packet> splitByInceptionPeriodPaths(PacketList<Packet> packets) {
+    protected Map<PathMapping, List<Packet>> splitByInceptionPeriodPaths(PacketList<Packet> packets) {
         // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
-        Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(packets.size());
+        Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
         if (packets == null || packets.size() == 0) {
             return resultMap;
         }
@@ -295,10 +385,10 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         return resultMap;
     }
 
-    protected Map<PathMapping, Packet> splitByOccurrenceAgainstUpdateDatePaths(PacketList<Packet> packets) {
+    protected Map<PathMapping, List<Packet>> splitByOccurrenceAgainstUpdateDatePaths(PacketList<Packet> packets) {
         //ONE WORD OF DIFFERENCE WITH OTHER METHOD! Should be refactored!
         // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
-        Map<PathMapping, Packet> resultMap = new LinkedHashMap<PathMapping, Packet>(packets.size());
+        Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
         if (packets == null || packets.size() == 0) {
             return resultMap;
         }
@@ -311,56 +401,71 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
     }
 
 
-    protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        //can't we just check against the list of compatible classes instead of doing this?
-        if (packet instanceof ClaimCashflowPacket) {
-            addToMap((ClaimCashflowPacket) packet, path, resultMap);
-        } else if (packet instanceof UnderwritingInfoPacket) {
-            addToMap((UnderwritingInfoPacket) packet, path, resultMap);
-        } else if (packet instanceof ContractFinancialsPacket) {
-            addToMap((ContractFinancialsPacket) packet, path, resultMap);
-        } else if (packet instanceof FinancialsPacket) {
-            addToMap((FinancialsPacket) packet, path, resultMap);
-        } else if (packet instanceof AdditionalPremium) {
-            addToMap((AdditionalPremium) packet, path, resultMap);
-        } else if (packet instanceof PaidAdditionalPremium) {
-            addToMap((PaidAdditionalPremium) packet, path, resultMap);
-        } else if (packet instanceof SingleValuePacket){
-            addToMap((SingleValuePacket) packet, path, resultMap);
-        } else if (packet instanceof ClaimDevelopmentPacket){
-                    addToMap((ClaimDevelopmentPacket) packet, path, resultMap);
-        } else {
-            throw new IllegalArgumentException("Packet type " + packet.getClass() + " is not supported.");
-        }
-    }
+//    protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
+//        //can't we just check against the list of compatible classes instead of doing this?
+//        if (packet instanceof ClaimCashflowPacket) {
+//            addToMap((ClaimCashflowPacket) packet, path, resultMap);
+//        } else if (packet instanceof UnderwritingInfoPacket) {
+//            addToMap((UnderwritingInfoPacket) packet, path, resultMap);
+//        } else if (packet instanceof ContractFinancialsPacket) {
+//            addToMap((ContractFinancialsPacket) packet, path, resultMap);
+//        } else if (packet instanceof FinancialsPacket) {
+//            addToMap((FinancialsPacket) packet, path, resultMap);
+//        } else if (packet instanceof AdditionalPremium) {
+//            addToMap((AdditionalPremium) packet, path, resultMap);
+//        } else if (packet instanceof PaidAdditionalPremium) {
+//            addToMap((PaidAdditionalPremium) packet, path, resultMap);
+//        } else if (packet instanceof SingleValuePacket){
+//            addToMap((SingleValuePacket) packet, path, resultMap);
+//        } else if (packet instanceof ClaimDevelopmentPacket){
+//                    addToMap((ClaimDevelopmentPacket) packet, path, resultMap);
+//        } else {
+//            throw new IllegalArgumentException("Packet type " + packet.getClass() + " is not supported.");
+//        }
+//    }
 
-    protected void addToMap(AdditionalPremium additionalPremium, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.get(path) == null) {
-            resultMap.put(path, additionalPremium);
-        } else {
-            AdditionalPremium aggregateMe = (AdditionalPremium) resultMap.get(path);
-            resultMap.put(path, aggregateMe.plusForAggregateCollection(additionalPremium));// TODO ?? s/Aggregate/Monthly/ ??
-        }
-    }
-    protected void addToMap(PaidAdditionalPremium additionalPremium, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.get(path) == null) {
-            resultMap.put(path, additionalPremium);
-        } else {
-            PaidAdditionalPremium aggregateMe = (PaidAdditionalPremium) resultMap.get(path);
-            resultMap.put(path, aggregateMe.plusForAggregateCollection(additionalPremium));// TODO ?? s/Aggregate/Monthly/ ??
-        }
-    }
+    // Note: list of "compatibleClasses" has already been checked before we get here.
+    //
+    // In case of single packet collectors the kind of packet doesnt matter as no packet-specific behaviour (ie
+    // aggregation) needs to discriminate the packet types. But for other collectors we may need to check the types as in
+    // the commented code below, and throw exception for unsupported packets types.
+    // As Paolo notes, we should even there be able to use a better approach by factoring out an interface or using
+    // better object oriented design.
+    protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, List<Packet>> resultMap) {
 
-    protected void addToMap(ContractFinancialsPacket packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
-        if (path == null) return;
-        if (resultMap.containsKey(path)) {
-            ContractFinancialsPacket aggregatePacket = (ContractFinancialsPacket) resultMap.get(path);
-            aggregatePacket.plus(packet);
-            resultMap.put(path, aggregatePacket);
+//
+//        if( (packet instanceof ClaimCashflowPacket) || (packet instanceof ClaimDevelopmentPacket) ) {
+
+// Note 2: as this is called once per packet ie EXTREMELY frequetnly, any speedup is very useful, so dropping the instanceof checks is a GOOD THING
+
+            if(path != null){
+                List<Packet> packetList;
+                // TODO use eg guava or spring map that will automatically create a missing entry on access
+                //
+                if (resultMap.containsKey(path)) {
+                    packetList =  resultMap.get(path);
         } else {
-            resultMap.put(path, packet.copy());
+                    packetList = new PacketList<Packet>();
+        }
+                packetList.add(packet);
+                resultMap.put(path, packetList);
+        } else {
+
+                String sender = "N/A";
+                String channel = "N/A";
+                try{
+                    sender = "" + packet.getSender();
+                }catch(Exception e){
+                    //nb Should not allow missing sender or channel to prevent logging of missing path!
+                    //hence exceptions not rethrown
+        }
+                try{
+                    channel = packet.getSenderChannelName();
+                }catch(Exception e){
+                    //nb Should not allow missing sender or channel to prevent logging of missing path!
+                    //hence exceptions not rethrown
+    }
+                LOG.info("Dropping packet (no path!) Sender: " + sender + ", sender channel: " + channel + ")" );
         }
     }
 
@@ -460,13 +565,16 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
             if (occurrenceDate.isBefore(updateDate)) {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem
-                return DrillDownMode.BY_UPDATEDATE.fromPastName;
+                return DrillDownMode.fromPastName;
             } else {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
                 return DrillDownMode.fromFutureName;
             }
         }else{
-            throw new IllegalArgumentException("No update date in simulation context"); //Evil hack that turned a blind eye on Things That Shouldn't Be turned into a Check that raises an exception - that was done for tests that this is now passing
+            // Some test was passing in a hollow object with no sim (and hence no update date).
+            //
+            // - that was done for tests that this is now passing
+            throw new IllegalArgumentException("No update date in simulation context");
         }
 
     }
