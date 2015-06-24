@@ -180,7 +180,9 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
         reportingFrequency = (GlobalReportingFrequency) packetCollector.getSimulationScope().getSimulation().getParameter("runtimeReportingFrequency");
         periodStart = currentIterationScope.getPeriodScope().getCurrentPeriodStartDate();
+
         periodEnd = currentIterationScope.getPeriodScope().getNextPeriodStartDate();
+        reportingDates = reportingFrequency.getReportingDatesForPeriod(periodStart, periodEnd);
 
         //called once per "collect" call - i.e. once per period. The cache created in the financial module could be accessed by
         //calling packetCollector.getSimulationScope().getModel().getAllComponents() and traversing the returned list - doesn't sound more efficient...
