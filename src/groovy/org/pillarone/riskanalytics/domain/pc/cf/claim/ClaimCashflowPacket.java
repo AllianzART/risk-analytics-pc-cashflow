@@ -697,7 +697,8 @@ public class ClaimCashflowPacket extends MultiValuePacket implements IAggregatab
 
         ClaimCashflowPacket storedFirstClaimForMarkers = claim;
 
-        for (claim = (ClaimCashflowPacket) iterator.next(); iterator.hasNext(); claim = (ClaimCashflowPacket) iterator.next()) {
+        while (iterator.hasNext()) {
+            claim = (ClaimCashflowPacket) iterator.next();
             ultimate += claim.ultimate();
             nominalUltimate += claim.nominalUltimate();
             paidIncremental += claim.getPaidIncrementalIndexed();
