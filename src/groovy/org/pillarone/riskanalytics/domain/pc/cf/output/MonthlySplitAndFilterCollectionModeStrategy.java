@@ -223,6 +223,9 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         if (drillDownModes.contains(DrillDownMode.BY_UPDATEDATE)) {
             resultMap.putAll(splitByOccurrenceAgainstUpdateDatePaths(packets));
         }
+        if (drillDownModes.contains(DrillDownMode.BY_CALENDARYEAR)) {
+            resultMap.putAll(splitByCalendarYearOfOccurrence(packets));
+        }
 
  /*       if (drillDownModes.contains(DrillDownMode.BY_TYPE)) {
             if(packets.get(0) instanceof AdditionalPremium) {
@@ -404,6 +407,21 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         return resultMap;
     }
 
+    protected Map<PathMapping, List<Packet>> splitByCalendarYearOfOccurrence(PacketList<Packet> packets) {
+        //ONE WORD OF DIFFERENCE WITH OTHER METHOD! Should be refactored!
+        // has to be a LinkedHashMap to make sure the shortest path is the first in the map and gets AGGREGATED as collecting mode
+        Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
+        if (packets == null || packets.size() == 0) {
+            return resultMap;
+        }
+
+        for (Packet packet : packets) {
+            PathMapping periodPath = getPathMappingForCalendarYearOfOccurrence(packet);
+            addToMap(packet, periodPath, resultMap);
+        }
+        return resultMap;
+    }
+
 
 //    protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
 //        //can't we just check against the list of compatible classes instead of doing this?
@@ -536,36 +554,58 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         return mappingCache.lookupPath(pathExtended);
     }
 
-    private String occurrencePeriodvsUpdateDate(Packet packet) {
-        if( new Random(System.currentTimeMillis()).nextInt(64) < 10 ){ //Avoid too much log spam
-        LOG.warn("AR-111 TODO clean up the flow here in occurrencePeriodvsUpdateDate "); //we want to remove this!
-        }
+    private PathMapping getPathMappingForCalendarYearOfOccurrence(Packet packet) {
+        String periodLabel = calendarYearOfOccurrence(packet);
+        String pathExtension = "period" + PATH_SEPARATOR + periodLabel;
+        String pathExtended = getExtendedPath(packet, pathExtension);
+        return mappingCache.lookupPath(pathExtended);
+    }
+
+    private String calendarYearOfOccurrence(Packet packet) {
+
         DateTime occurrenceDate = null;
         Simulation simulation = packetCollector.getSimulationScope().getSimulation();
-        if(  simulation != null ){
-            DateTime updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate")); //couldn't this be set once? PA
-            if (packet instanceof ClaimCashflowPacket) {
-                occurrenceDate = ((ClaimCashflowPacket) packet).getBaseClaim().getOccurrenceDate();
-              } else if (packet instanceof SingleValuePacketWithClaimRoot) {
-                occurrenceDate = ((SingleValuePacketWithClaimRoot) packet).getBaseClaimIncurredDate();
-              } else if (packet instanceof ClaimDevelopmentPacket) {
-                occurrenceDate = ((ClaimDevelopmentPacket) packet).getIncurredDate();
+
+        occurrenceDate = getOccurrenceDate(packet);
+        return ""+occurrenceDate.getYear();
+    }
+
+    private DateTime getOccurrenceDate(Packet packet) { //ToDo: make a method of packet classes
+        DateTime occurrenceDate;
+        if (packet instanceof ClaimCashflowPacket) {
+            occurrenceDate = ((ClaimCashflowPacket) packet).getBaseClaim().getOccurrenceDate();
+        } else if (packet instanceof SingleValuePacketWithClaimRoot) {
+            occurrenceDate = ((SingleValuePacketWithClaimRoot) packet).getBaseClaimIncurredDate();
+        } else if (packet instanceof ClaimDevelopmentPacket) {
+            occurrenceDate = ((ClaimDevelopmentPacket) packet).getIncurredDate();
 //            } else if (packet instanceof UnderwritingInfoPacket) {
 //              date = ((UnderwritingInfoPacket) packet).getExposure().getInceptionDate();
 //            } else if (packet instanceof ContractFinancialsPacket) {
 //              date = ((ContractFinancialsPacket) packet).getInceptionDate();
 //            } else if (packet instanceof FinancialsPacket) {
 //               date = ((FinancialsPacket) packet).getInceptionDate();
-              } else {
-                throw new IllegalArgumentException("Packet type " + packet.getClass() + " not supported for split cashflow on past/future occurrence date");
-            }
+        } else {
+            throw new IllegalArgumentException("Packet type " + packet.getClass() + " not supported for split cashflow on occurrence date");
+        }
 
-            if(occurrenceDate == null ){
-                throw new IllegalArgumentException("Null occurrenceDate" );
-            }
+        if(occurrenceDate == null ){
+            throw new IllegalArgumentException("Null occurrenceDate" );
+        }
+        return occurrenceDate;
+    }
+
+    private String occurrencePeriodvsUpdateDate(Packet packet) {
+
+
+        Simulation simulation = packetCollector.getSimulationScope().getSimulation();
+        if(  simulation != null ){
+            DateTime updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate")); //couldn't this be set once? PA
+
             if(updateDate == null ){
                 throw new IllegalArgumentException("Null updateDate" );
             }
+
+            DateTime occurrenceDate = getOccurrenceDate(packet);
 
             if (occurrenceDate.isBefore(updateDate)) {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem

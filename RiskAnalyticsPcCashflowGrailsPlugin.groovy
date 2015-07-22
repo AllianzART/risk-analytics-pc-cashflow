@@ -163,7 +163,10 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new SingleSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
-    //AR-111 BLOCK END
+        CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CALENDARYEAR],[CCP.PAID_INDEXED] ,[CCP]))
+        CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CALENDARYEAR],[CDP.PAID] ,[CDP]))
+
+        //AR-111 BLOCK END
     }
 
     def onChange = { event ->
