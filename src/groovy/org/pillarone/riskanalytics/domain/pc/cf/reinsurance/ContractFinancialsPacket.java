@@ -45,10 +45,10 @@ public class ContractFinancialsPacket extends MultiValuePacket {
                                     List<CededUnderwritingInfoPacket> cededUwInformation,
                                     List<UnderwritingInfoPacket> netUwInformation, boolean singlePeriod) {
         if (!cededClaims.isEmpty()) {
-            cededClaim = ClaimUtils.sum(cededClaims, true).ultimate();
+            cededClaim = ClaimUtils.sum(ClaimUtils.castCCPListToPacketList(cededClaims) , true).ultimate();
         }
         if (!netClaims.isEmpty()) {
-            netClaim = ClaimUtils.sum(netClaims, true).ultimate();
+            netClaim = ClaimUtils.sum(ClaimUtils.castCCPListToPacketList(netClaims), true).ultimate();
         }
         if (!cededUwInformation.isEmpty()) {
             CededUnderwritingInfoPacket aggregateCededUwInfoPacket = UnderwritingInfoUtils.aggregateCeded(cededUwInformation);

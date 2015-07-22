@@ -3,7 +3,10 @@ package org.pillarone.riskanalytics.domain.pc.cf.claim;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
+import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.simulation.SimulationException;
 import org.pillarone.riskanalytics.domain.pc.cf.exposure.ExposureInfo;
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.ClaimStorage;
@@ -19,7 +22,37 @@ import java.util.*;
 /**
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
+
+@Deprecated
 public class ClaimUtils {
+
+    protected static Log LOG = LogFactory.getLog(ClaimUtils.class);
+
+    public static List<Packet> castCDPListToPacketList(List<ClaimDevelopmentPacket> input) {
+
+        List<Packet> output = new ArrayList<Packet>(input.size());
+
+        //Purely for casting purposes
+        for (Packet packet: input) {
+            output.add(packet);
+        }
+
+        return output;
+    }
+
+    public static List<Packet> castCCPListToPacketList(List<ClaimCashflowPacket> input) {
+
+        List<Packet> output = new ArrayList<Packet>(input.size());
+
+        //Purely for casting purposes
+        for (Packet packet: input) {
+            output.add(packet);
+        }
+
+        return output;
+    }
+
+
 
     /**
      * Adds up all claims and builds a corresponding new base claim. Its exposure info and discount factor is null.
@@ -29,7 +62,7 @@ public class ClaimUtils {
      * @param sameBaseClaim: Marker interface of returned packet are all null if false
      * @return null if claims is empty. New object if claims.size() > 1
      */
-    public static ClaimCashflowPacket sum(List<ClaimCashflowPacket> claims, boolean sameBaseClaim) {
+    public static ClaimCashflowPacket sum(List<Packet> claims, boolean sameBaseClaim) {
         /** PA Note during work on AR-111
         **  Substantial code duplication with aggregateByBaseClaim below.
         **  the two "static methods" are also applied on on top of the other in at least one place
@@ -38,92 +71,20 @@ public class ClaimUtils {
         **  constructs that could be greatly simplified
         **/
 
-        if (claims.isEmpty()) return null;
-        if (claims.size() == 1) return claims.get(0);
-        if (!sameBaseClaim) {
-            throw new NotImplementedException("method is currently implemented for same base claim only");
-        }
-        double ultimate = 0;
-        double nominalUltimate = 0;
-        double paidIncremental = 0;
-        double paidCumulated = 0;
-        double reportedIncremental = 0;
-        double reportedCumulated = 0;
-        double reserves = 0;
-        double appliedIndex = 1;
-        double changeInReservesIndexed = 0;
-        double changeInIBNRIndexed = 0;
-        double premiumRisk = 0;
-        double reserveRisk = 0;
-        for (ClaimCashflowPacket claim : claims) {
-            ultimate += claim.ultimate();
-            nominalUltimate += claim.nominalUltimate();
-            paidIncremental += claim.getPaidIncrementalIndexed();
-            paidCumulated += claim.getPaidCumulatedIndexed();
-            reportedIncremental += claim.getReportedIncrementalIndexed();
-            reportedCumulated += claim.getReportedCumulatedIndexed();
-            reserves += claim.reservedIndexed();
-            appliedIndex *= claim.getAppliedIndexValue();
-            changeInReservesIndexed += claim.getChangeInReservesIndexed();
-            changeInIBNRIndexed += claim.getChangeInIBNRIndexed();
-            premiumRisk += claim.getPremiumRisk();
-            reserveRisk += claim.getReserveRisk();
-        }
-        ClaimRoot baseClaim = new ClaimRoot(ultimate, claims.get(0).getBaseClaim());
-        DateTime updateDate = claims.get(0).getUpdateDate();
-        int updatePeriod = 0;
-        if (claims.get(0).getUpdatePeriod() != null) {
-            updatePeriod = claims.get(0).getUpdatePeriod();
-        }
-        ClaimCashflowPacket summedClaims = new ClaimCashflowPacket(baseClaim, ultimate, nominalUltimate, paidIncremental,
-                paidCumulated, reportedIncremental, reportedCumulated, reserves, changeInReservesIndexed,
-                changeInIBNRIndexed, null, updateDate, updatePeriod);
-        applyMarkers(claims.get(0), summedClaims);
-        summedClaims.setAppliedIndexValue(claims.size() == 0 ? 1d : Math.pow(appliedIndex, 1d / claims.size()));
-        summedClaims.setPremiumRisk(premiumRisk);
-        summedClaims.setReserveRisk(reserveRisk);
+        ClaimCashflowPacket delegate = (new ClaimCashflowPacket());
+
+        ClaimCashflowPacket summedClaims = (ClaimCashflowPacket) delegate.sum(claims);
+
         return summedClaims;
     }
-    public static ClaimDevelopmentPacket sumCDP(List<ClaimDevelopmentPacket> claims, boolean sameBaseClaim) {
+    public static ClaimDevelopmentPacket sumCDP(List<Packet> claims, boolean sameBaseClaim) {
         /** PA Note during work on AR-111
         **  This should probably be made a method of the class above...
         **/
+        ClaimDevelopmentPacket delegate = (new ClaimDevelopmentPacket());
 
-        if (claims.isEmpty()) return null;
-        if (claims.size() == 1) return claims.get(0);
-        if (!sameBaseClaim) {
-            throw new NotImplementedException("method is currently implemented for same base claim only");
-        }
-        double paid = 0;
-        double reserved = 0;
-        double changeInReserves = 0;
+        ClaimDevelopmentPacket summedClaims = (ClaimDevelopmentPacket) delegate.sum(claims);
 
-        for (ClaimDevelopmentPacket claim : claims) {
-            paid += claim.getPaid();
-            reserved += claim.getReserved();
-            // Summing every thing this time as the other sum sums even ultimates
-            changeInReserves += claim.getChangeInReserves(); //changes in reserves should be incremental by def
-        }
-
-//        ClaimRoot baseClaim = new ClaimRoot(ultimate, claims.get(0).getBaseClaim());
-        Claim baseClaim = new Claim();
-        baseClaim.set(claims.get(0).getOriginalClaim());
-
-        //..hmmm how to do this right ?
-
-//        DateTime updateDate = claims.get(0).getUpdateDate();
-//        int updatePeriod = 0;
-//        if (claims.get(0).getUpdatePeriod() != null) {
-//            updatePeriod = claims.get(0).getUpdatePeriod();
-//        }
-
-        ClaimDevelopmentPacket summedClaims = new ClaimDevelopmentPacket(baseClaim);
-        // this may bite...
-//        applyMarkers(claims.get(0), summedClaims);
-
-        summedClaims.setPaid(paid);
-        summedClaims.setReserved(reserved);
-        summedClaims.setChangeInReserves(changeInReserves);
         return summedClaims;
     }
 
@@ -147,121 +108,27 @@ public class ClaimUtils {
     }
 
     //TODO (dbr, sku) use method returning a map here. when doing so, check if test : AggregateSplitPerSourceCollectingModeStrategyTests works.
-    public static List<ClaimCashflowPacket> aggregateByBaseClaim(List<ClaimCashflowPacket> claims) {
-        List<ClaimCashflowPacket> aggregateByBaseClaim = new ArrayList<ClaimCashflowPacket>();
-        ListMultimap<IClaimRoot, ClaimCashflowPacket> claimsByBaseClaim = ArrayListMultimap.create();
-        for (ClaimCashflowPacket claim : claims) {
-            claimsByBaseClaim.put(claim.getBaseClaim(), claim);
-        }
-        for (Collection<ClaimCashflowPacket> claimsWithSameBaseClaim : claimsByBaseClaim.asMap().values()) {
-            if (claimsWithSameBaseClaim.size() == 1) {
-                aggregateByBaseClaim.add(claimsWithSameBaseClaim.iterator().next());
-            }
-            else {
-                double ultimate = 0;
-                double nominalUltimate = 0;
-                double paidIncremental = 0;
-                double paidCumulated = 0;
-                double reportedIncremental = 0;
-                double reportedCumulated = 0;
-                DateTime mostRecentClaimUpdate = null;
-                double latestReserves = 0;
-                double appliedIndex = 1;
-                double changeInReservesIndexed = 0;
-                double changeInIBNRIndexed = 0;
-                double premiumRisk = 0;
-                double reserveRisk = 0;
-                for (ClaimCashflowPacket claim : claimsWithSameBaseClaim) {
-                    ultimate += claim.ultimate();
-                    nominalUltimate = claim.nominalUltimate();  // don't sum up as every CCP contains the same value!
-                    paidIncremental += claim.getPaidIncrementalIndexed();
-                    reportedIncremental += claim.getReportedIncrementalIndexed();
-                    appliedIndex *= claim.getAppliedIndexValue();
-                    premiumRisk += claim.getPremiumRisk();
-                    reserveRisk += claim.getReserveRisk();
-                    if (mostRecentClaimUpdate == null || claim.getUpdateDate().isAfter(mostRecentClaimUpdate)) {
-                        mostRecentClaimUpdate = claim.getUpdateDate();
-                        reportedCumulated = claim.getReportedCumulatedIndexed();
-                        paidCumulated = claim.getPaidCumulatedIndexed();
-                        latestReserves = claim.reservedIndexed();
-                        changeInReservesIndexed += claim.getChangeInReservesIndexed();
-                        changeInIBNRIndexed += claim.getChangeInIBNRIndexed();
-                    }
-                }
-                IClaimRoot baseClaim = null;
-                if (claims.get(0).getBaseClaim() instanceof GrossClaimRoot) {
-                    baseClaim = new GrossClaimRoot((GrossClaimRoot) claims.get(0).getBaseClaim());
-                }
-                else {
-                    baseClaim = new ClaimRoot(ultimate, claims.get(0).getBaseClaim());
-                }
-                int updatePeriod = 0;
-                if (claims.get(0).getUpdatePeriod() != null) {
-                    updatePeriod = claims.get(0).getUpdatePeriod();
-                }
-                ClaimCashflowPacket aggregateClaim = new ClaimCashflowPacket(baseClaim, ultimate, nominalUltimate,
-                        paidIncremental, paidCumulated, reportedIncremental, reportedCumulated, latestReserves,
-                        changeInReservesIndexed, changeInIBNRIndexed, null, mostRecentClaimUpdate, updatePeriod);
-                aggregateClaim.setAppliedIndexValue(appliedIndex);
-                aggregateClaim.setPremiumRisk(premiumRisk);
-                aggregateClaim.setReserveRisk(reserveRisk);
-                applyMarkers(claims.get(0), aggregateClaim);
-                aggregateByBaseClaim.add(aggregateClaim);
-            }
-        }
-        return aggregateByBaseClaim;
+    public static List<Packet> aggregateByBaseClaim(List<ClaimCashflowPacket> claims) {
+
+        ClaimCashflowPacket delegate = new ClaimCashflowPacket();
+
+        List<Packet> castList = castCCPListToPacketList(claims); // cast,cast,cast (v, irr.)
+
+        List<Packet> ret = delegate.aggregateByBaseClaim(castList);
+
+        return ret;
+
     }
 
-    public static List<ClaimDevelopmentPacket> aggregateByBaseClaimCDP(List<ClaimDevelopmentPacket> claims) {
+    public static List<Packet> aggregateByBaseClaimCDP(List<ClaimDevelopmentPacket> claims) {
 
-        List<ClaimDevelopmentPacket> aggregateByBaseClaim = new ArrayList<ClaimDevelopmentPacket>();
-        ListMultimap<Claim, ClaimDevelopmentPacket> claimsByBaseClaim = ArrayListMultimap.create();
+        ClaimDevelopmentPacket delegate = new ClaimDevelopmentPacket();
 
-        for (ClaimDevelopmentPacket claim : claims) {
-            claimsByBaseClaim.put( claim.getOriginalClaim(), claim);
-        }
-        for (Collection<ClaimDevelopmentPacket> claimsWithSameBaseClaim : claimsByBaseClaim.asMap().values()) {
-            if (claimsWithSameBaseClaim.size() == 1) {
-                aggregateByBaseClaim.add(claimsWithSameBaseClaim.iterator().next());
-            }
-            else {
-                double paid = 0;
-                double reserved = 0;
-                double changeInReserves = 0;
+        List<Packet> castList = castCDPListToPacketList(claims); // cast,cast,cast (v, irr.)
 
-                DateTime mostRecentDate = new DateTime(0).minusYears(200); // better safe than sorry
+        List<Packet> ret = delegate.aggregateByBaseClaim(castList);
 
-                for (ClaimDevelopmentPacket claim : claimsWithSameBaseClaim) {
-
-                    if (claim.getDate().isAfter(mostRecentDate)) {
-
-                        paid = claim.getPaid();
-                        reserved = claim.getReserved();
-
-                        mostRecentDate = claim.getDate();
-
-                    }
-                    // I'm not summing as I'd guess these not to be incremental but total values
-                    //assumption would be that we are looking at updates to the same claim, in chronological order
-                    changeInReserves += claim.getChangeInReserves(); //changes in reserves should be incremental by def
-                }
-                Claim baseClaim = new Claim();
-                baseClaim.set(claims.get(0).getOriginalClaim());
-
-//                int updatePeriod = 0;
-//                if (claims.get(0). != null) {
-//                    updatePeriod = claims.get(0).getUpdatePeriod();
-//                }
-
-                ClaimDevelopmentPacket aggregateClaim = new ClaimDevelopmentPacket(baseClaim);
-                aggregateClaim.setPaid(paid);
-                aggregateClaim.setReserved(reserved);
-                aggregateClaim.setChangeInReserves(changeInReserves);
-                //applyMarkers(claims.get(0), aggregateClaim); //Do we need them? Can't find the equivalent fields...
-                aggregateByBaseClaim.add(aggregateClaim);
-            }
-        }
-        return aggregateByBaseClaim;
+        return ret;
     }
     
     /**
@@ -579,7 +446,7 @@ public class ClaimUtils {
         for (ClaimCashflowPacket grossClaim : claimsGross) {
             List<ClaimCashflowPacket> cededClaims = aggregateCededClaimPerRoot.get(grossClaim.getKeyClaim());
             cededClaimsWithMatchingGrossClaim.addAll(cededClaims);
-            ClaimCashflowPacket aggregateCededClaim = sum(cededClaims, true);
+            ClaimCashflowPacket aggregateCededClaim = sum(castCCPListToPacketList(cededClaims), true);
             ClaimCashflowPacket netClaim = getNetClaim(grossClaim, aggregateCededClaim, null);
             claimsNet.add(netClaim);
         }
@@ -593,8 +460,8 @@ public class ClaimUtils {
                     throw new SimulationException("Extra ceded claim found with wrong claim type " + reserveClaim);
                 }
             }
-            List<ClaimCashflowPacket> aggregateClaimsByBaseClaim = aggregateByBaseClaim(extraCededClaims);
-            claimsNet.add(sum(aggregateClaimsByBaseClaim, true));
+
+            claimsNet.add(sum(aggregateByBaseClaim(extraCededClaims), true));
         }
         return claimsNet;
     }
@@ -640,9 +507,8 @@ public class ClaimUtils {
                                                         List<ClaimCashflowPacket> claimsCeded) {
         if (claimsGross == null && claimsCeded == null) return null;
         if (claimsGross.size() == 0 && claimsCeded.size() == 0) return null;
-        List<ClaimCashflowPacket> aggregateClaimsCededByBaseClaim = ClaimUtils.aggregateByBaseClaim(claimsCeded);
-        ClaimCashflowPacket claimCeded = ClaimUtils.sum(aggregateClaimsCededByBaseClaim, true);
-        List<ClaimCashflowPacket> aggregateClaimsGrossByBaseClaim = ClaimUtils.aggregateByBaseClaim(claimsGross);
+        ClaimCashflowPacket claimCeded = ClaimUtils.sum(aggregateByBaseClaim(claimsCeded), true);
+        List<Packet> aggregateClaimsGrossByBaseClaim = ClaimUtils.aggregateByBaseClaim(claimsGross);
         ClaimCashflowPacket claimGross = ClaimUtils.sum(aggregateClaimsGrossByBaseClaim, true);
         if (claimCeded == null) {
             return getNetClaim(claimGross, null, null);
