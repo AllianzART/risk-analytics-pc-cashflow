@@ -154,7 +154,7 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         //Rationale: My bet here is that the part of Artisan/P1 programmed by smart people would show options in
         //simulation collection templates based on which collectors are compatible to each channel, using the compatible
         //packet list specified here in the third parameter. -- after trying, it appears to be so
-        //CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [], [SingleValuePacketWithClaimRoot])) //support for SVPWithClaimRoot parked and not working yet
+        CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE], [], [SingleValuePacketWithClaimRoot])) //support for SVPWithClaimRoot parked and not working yet
         CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
         CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID, CDP.CHANGE_IN_RESERVES] ,[CDP]))
         CollectingModeFactory.registerStrategy(new AggregateSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.INCURRED, CDP.CHANGE_IN_RESERVES] ,[CDP]))

@@ -207,6 +207,7 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
         return ClaimCashflowPacket.class.isAssignableFrom(packetClass) || UnderwritingInfoPacket.class.isAssignableFrom(packetClass);
     }
 
+    // TODO make this abstract and test if ok
     public Object[] getArguments() {
         return new Object[0];
     }
