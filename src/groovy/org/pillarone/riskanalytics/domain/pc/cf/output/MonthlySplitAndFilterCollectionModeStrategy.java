@@ -556,7 +556,7 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
     private PathMapping getPathMappingForCalendarYearOfOccurrence(Packet packet) {
         String periodLabel = calendarYearOfOccurrence(packet);
-        String pathExtension = "period" + PATH_SEPARATOR + periodLabel;
+        String pathExtension = "calendarYearOfOccurrence" + PATH_SEPARATOR + periodLabel;
         String pathExtended = getExtendedPath(packet, pathExtension);
         return mappingCache.lookupPath(pathExtended);
     }
