@@ -610,6 +610,9 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
             if (occurrenceDate.isBefore(updateDate)) {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem
                 return DrillDownMode.fromPastName;
+            } else if (occurrenceDate.isBefore(updateDate.plusYears(1))) {
+                //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
+                return DrillDownMode.fromNextName;
             } else {
                 //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
                 return DrillDownMode.fromFutureName;
