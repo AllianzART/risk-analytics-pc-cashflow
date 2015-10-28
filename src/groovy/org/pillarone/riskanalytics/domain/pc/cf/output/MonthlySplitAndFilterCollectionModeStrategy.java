@@ -1,6 +1,6 @@
 package org.pillarone.riskanalytics.domain.pc.cf.output;
 
-import com.allianz.art.riskanalytics.cf.generators.claims.RMSCatClaimsGenerator;
+//import com.allianz.art.riskanalytics.cf.generators.claims.RMSCatClaimsGenerator;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -425,8 +425,6 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
     }
 
     protected Map<PathMapping, List<Packet>> splitByCatType(PacketList<Packet> packets) {
-        // Initially simply treat it as Nat Cat if claim generator is RMSCatClaimsGenerator..
-        //
         Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
         if (packets == null || packets.size() == 0) {
             return resultMap;
@@ -599,8 +597,11 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         return ""+occurrenceDate.getYear();
     }
 
-    // Return: 'Nat Cat' or 'NonNat Cat'
-    // Inspect the packet and figure out if RMSCatClaimsGenerator generated the claim ?
+    // Initially simply treat it as Nat Cat if either :-
+    // - claim generator class has rms in name (eg RMSCatClaimsGenerator), r
+    // - claim generator has natcat in name
+    //
+    // Simplistic... but I like simple.
     //
     // TODO MOVE INTO DRILLDOWNMODE
     //
@@ -612,10 +613,13 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         }
         ClaimCashflowPacket claimCashflowPacket = (ClaimCashflowPacket) packet;
         IPerilMarker peril = claimCashflowPacket.peril();
+        String claimGeneratorName = claimCashflowPacket.peril().getClass().getSimpleName();
 
-        if (peril instanceof RMSCatClaimsGenerator) {
+        if (StringUtils.containsIgnoreCase(claimGeneratorName, "RMS" ) ){
             return DrillDownMode.catType_Nat;
-        } else {
+        }
+        else
+        {
             return DrillDownMode.catType_nonNat;
         }
     }
