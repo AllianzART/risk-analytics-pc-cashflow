@@ -613,13 +613,16 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         }
         ClaimCashflowPacket claimCashflowPacket = (ClaimCashflowPacket) packet;
         IPerilMarker peril = claimCashflowPacket.peril();
-        String claimGeneratorName = claimCashflowPacket.peril().getClass().getSimpleName();
+        String claimGeneratorClassName = peril.getClass().getSimpleName();
+        String claimGeneratorName = peril.getClass().toString();
 
-        if (StringUtils.containsIgnoreCase(claimGeneratorName, "RMS" ) ){
+        // TODO move strings to constants
+        //
+        if (StringUtils.containsIgnoreCase(claimGeneratorClassName, "RMS" ) ){
             return DrillDownMode.catType_Nat;
-        }
-        else
-        {
+        } else if(StringUtils.containsIgnoreCase(claimGeneratorName, "NatCat" )){
+            return DrillDownMode.catType_Nat;
+        } else {
             return DrillDownMode.catType_nonNat;
         }
     }
