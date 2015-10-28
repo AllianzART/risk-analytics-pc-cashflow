@@ -3,6 +3,7 @@ package org.pillarone.riskanalytics.domain.pc.cf.output;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pillarone.riskanalytics.core.components.IComponentMarker;
+import org.pillarone.riskanalytics.core.model.ModelHelper;
 import org.pillarone.riskanalytics.core.output.ICollectingModeStrategy;
 import org.pillarone.riskanalytics.core.output.PacketCollector;
 import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
@@ -29,7 +30,7 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
     protected static Log LOG = LogFactory.getLog(AbstractMonthlySplitCollectionModeStrategy.class);
 
     protected static final String RESOURCE_BUNDLE = "org.pillarone.riskanalytics.domain.pc.cf.output.CollectingModeStrategyResources";
-    protected static final String PATH_SEPARATOR = ":";
+//    protected static final String PATH_SEPARATOR = ":";
     protected String displayName;
 
     protected PacketCollector packetCollector;
@@ -91,7 +92,7 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
     protected PathMapping getPathMapping(Packet packet, IComponentMarker marker, String pathExtensionPrefix) {
         PathMapping path = markerPaths.get(marker);
         if (marker != null && path == null) {
-            String pathExtension = pathExtensionPrefix + PATH_SEPARATOR + marker.getName();
+            String pathExtension = pathExtensionPrefix + ModelHelper.PATH_SEPARATOR  + marker.getName();
             String pathExtended = getExtendedPath(packet, pathExtension);
             path = mappingCache.lookupPath(pathExtended);
             markerPaths.put(marker, path);
@@ -105,8 +106,8 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
         ComposedMarkerKey pair = new ComposedMarkerKey(firstMarker, secondMarker);
         PathMapping path = markerComposedPaths.get(pair);
         if (firstMarker != null && path == null) {
-            String pathExtension = firstPathExtensionPrefix + PATH_SEPARATOR + firstMarker.getName()
-                    + PATH_SEPARATOR + secondPathExtensionPrefix + PATH_SEPARATOR + secondMarker.getName();
+            String pathExtension = firstPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + firstMarker.getName()
+                    + ModelHelper.PATH_SEPARATOR + secondPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + secondMarker.getName();
             String pathExtended = getExtendedPath(packet, pathExtension);
             path = mappingCache.lookupPath(pathExtended);
             markerComposedPaths.put(pair, path);
@@ -121,9 +122,9 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
         ComposedMarkerKey pair = new ComposedMarkerKey(firstMarker, secondMarker, thirdMarker);
         PathMapping path = markerComposedPaths.get(pair);
         if (firstMarker != null && path == null) {
-            String pathExtension = firstPathExtensionPrefix + PATH_SEPARATOR + firstMarker.getName()
-                    + PATH_SEPARATOR + secondPathExtensionPrefix + PATH_SEPARATOR + secondMarker.getName()
-                    + PATH_SEPARATOR + thirdPathExtensionPrefix + PATH_SEPARATOR + thirdMarker.getName();
+            String pathExtension = firstPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + firstMarker.getName()
+                    + ModelHelper.PATH_SEPARATOR + secondPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + secondMarker.getName()
+                    + ModelHelper.PATH_SEPARATOR + thirdPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + thirdMarker.getName();
             String pathExtended = getExtendedPath(packet, pathExtension);
             path = mappingCache.lookupPath(pathExtended);
             markerComposedPaths.put(pair, path);
@@ -179,9 +180,9 @@ abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICol
     protected String getExtendedPath(Packet packet, String pathExtension) {
         if (pathExtension == null) return null;
         StringBuilder composedPath = new StringBuilder(componentPath);
-        composedPath.append(PATH_SEPARATOR);
+        composedPath.append(ModelHelper.PATH_SEPARATOR);
         composedPath.append(pathExtension);
-        composedPath.append(PATH_SEPARATOR);
+        composedPath.append(ModelHelper.PATH_SEPARATOR);
         composedPath.append(packet.senderChannelName);
         return composedPath.toString();
     }

@@ -163,8 +163,13 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new SingleSplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CCP.PAID_INDEXED] ,[CCP]))
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_UPDATEDATE],[CDP.PAID] ,[CDP]))
+
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CALENDARYEAR],[CCP.PAID_INDEXED] ,[CCP]))
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CALENDARYEAR],[CDP.PAID] ,[CDP]))
+
+        CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CAT_TYPE],[CCP.PAID_INDEXED] ,[CCP]))
+        //CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CAT_TYPE, DrillDownMode.BY_CALENDARYEAR],[CCP.PAID_INDEXED] ,[CCP]))
+//      CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CAT_TYPE],[CDP.PAID] ,[CDP])) //UNCOMMENT LATER IF RESTRICTION ON PACKET TYPE REMOVED
 
         //AR-111 BLOCK END
     }

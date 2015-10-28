@@ -1,5 +1,6 @@
 package org.pillarone.riskanalytics.domain.pc.cf.output;
 
+import com.allianz.art.riskanalytics.cf.generators.claims.RMSCatClaimsGenerator;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -9,6 +10,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.pillarone.riskanalytics.core.components.Component;
+import org.pillarone.riskanalytics.core.model.ModelHelper;
 import org.pillarone.riskanalytics.core.components.DynamicComposedComponent;
 import org.pillarone.riskanalytics.core.output.DrillDownMode;
 import org.pillarone.riskanalytics.core.output.PathMapping;
@@ -18,6 +20,7 @@ import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
 import org.pillarone.riskanalytics.core.packets.SingleValuePacket;
 import org.pillarone.riskanalytics.core.simulation.IPeriodCounter;
+import org.pillarone.riskanalytics.core.simulation.SimulationException;
 import org.pillarone.riskanalytics.core.simulation.engine.GlobalReportingFrequency;
 import org.pillarone.riskanalytics.core.simulation.engine.IterationScope;
 import org.pillarone.riskanalytics.core.simulation.item.Simulation;
@@ -30,11 +33,7 @@ import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.a
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.PaidAdditionalPremium;
 import org.pillarone.riskanalytics.domain.pc.cf.segment.FinancialsPacket;
 import org.pillarone.riskanalytics.domain.pc.reserves.cashflow.ClaimDevelopmentPacket;
-import org.pillarone.riskanalytics.domain.utils.marker.ILegalEntityMarker;
-import org.pillarone.riskanalytics.domain.utils.marker.IReinsuranceContractMarker;
-import org.pillarone.riskanalytics.domain.utils.marker.ISegmentMarker;
-import org.pillarone.riskanalytics.domain.utils.marker.IStructureMarker;
-
+import org.pillarone.riskanalytics.domain.utils.marker.*;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -225,6 +224,9 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         }
         if (drillDownModes.contains(DrillDownMode.BY_CALENDARYEAR)) {
             resultMap.putAll(splitByCalendarYearOfOccurrence(packets));
+        }
+        if (drillDownModes.contains(DrillDownMode.BY_CAT_TYPE)) { // Start off with: Nat vs Non Nat - Cat
+            resultMap.putAll(splitByCatType(packets));
         }
 
  /*       if (drillDownModes.contains(DrillDownMode.BY_TYPE)) {
@@ -422,6 +424,20 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         return resultMap;
     }
 
+    protected Map<PathMapping, List<Packet>> splitByCatType(PacketList<Packet> packets) {
+        // Initially simply treat it as Nat Cat if claim generator is RMSCatClaimsGenerator..
+        //
+        Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
+        if (packets == null || packets.size() == 0) {
+            return resultMap;
+        }
+
+        for (Packet packet : packets) {
+            PathMapping periodPath = getPathMappingForCatType(packet);
+            addToMap(packet, periodPath, resultMap);
+        }
+        return resultMap;
+    }
 
 //    protected void addToMap(Packet packet, PathMapping path, Map<PathMapping, Packet> resultMap) {
 //        //can't we just check against the list of compatible classes instead of doing this?
@@ -518,7 +534,7 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
      */
     private PathMapping getPathMappingForInceptionPeriod(Packet packet) {
         String periodLabel = inceptionPeriod(packet);
-        String pathExtension = "period" + PATH_SEPARATOR + periodLabel;
+        String pathExtension = ModelHelper.PERIOD + ModelHelper.PATH_SEPARATOR + periodLabel;
         String pathExtended = getExtendedPath(packet, pathExtension);
         return mappingCache.lookupPath(pathExtended);
     }
@@ -549,17 +565,30 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
     private PathMapping getPathMappingForOccurrencePeriodvsUpdateDate(Packet packet) {
         String periodLabel = occurrencePeriodvsUpdateDate(packet);
-        String pathExtension = "period" + PATH_SEPARATOR + periodLabel;
+        String pathExtension = ModelHelper.PERIOD + ModelHelper.PATH_SEPARATOR  + periodLabel;
         String pathExtended = getExtendedPath(packet, pathExtension);
         return mappingCache.lookupPath(pathExtended);
     }
 
     private PathMapping getPathMappingForCalendarYearOfOccurrence(Packet packet) {
         String periodLabel = calendarYearOfOccurrence(packet);
-        String pathExtension = "calendarYearOfOccurrence" + PATH_SEPARATOR + periodLabel;
+        String pathExtension = ModelHelper.CALENDARYEAROFOCCURRENCE + ModelHelper.PATH_SEPARATOR  + periodLabel;
         String pathExtended = getExtendedPath(packet, pathExtension);
         return mappingCache.lookupPath(pathExtended);
     }
+
+    // Will have two labels: Natcat and Non-natcat
+    // ----- aggregate value here:        100
+    // ----------'Nat Cat'    part here:   40
+    // ----------'NonNat Cat' part here:   10
+    //
+    private PathMapping getPathMappingForCatType(Packet packet) {
+        String pathExtension = ModelHelper.CAT_TYPE + ModelHelper.PATH_SEPARATOR  + NatOrNot(packet); //returns: 'Nat Cat' or 'NonNat Cat'
+        String pathExtended = getExtendedPath(packet, pathExtension); // another method that should live in PathMapping
+        return mappingCache.lookupPath(pathExtended);
+    }
+
+
 
     private String calendarYearOfOccurrence(Packet packet) {
 
@@ -568,6 +597,27 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
         occurrenceDate = getOccurrenceDate(packet);
         return ""+occurrenceDate.getYear();
+    }
+
+    // Return: 'Nat Cat' or 'NonNat Cat'
+    // Inspect the packet and figure out if RMSCatClaimsGenerator generated the claim ?
+    //
+    // TODO MOVE INTO DRILLDOWNMODE
+    //
+    private String NatOrNot(Packet packet) {
+
+        if( !(packet instanceof ClaimCashflowPacket) ){
+            throw new SimulationException("Nat vs Non Nat Cat Split only supported for ClaimCashflowPacket, not " +
+                                           packet.getClass().getSimpleName());
+        }
+        ClaimCashflowPacket claimCashflowPacket = (ClaimCashflowPacket) packet;
+        IPerilMarker peril = claimCashflowPacket.peril();
+
+        if (peril instanceof RMSCatClaimsGenerator) {
+            return DrillDownMode.catType_Nat;
+        } else {
+            return DrillDownMode.catType_nonNat;
+        }
     }
 
     private DateTime getOccurrenceDate(Packet packet) { //ToDo: make a method of packet classes
