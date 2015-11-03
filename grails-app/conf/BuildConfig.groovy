@@ -54,7 +54,6 @@ grails.project.repos.default = "pillarone"
 grails.project.dependency.distribution = {
     String password = ""
     String user = ""
-    String scpUrl = ""
     try {
         Properties properties = new Properties()
         String version = new GroovyClassLoader().loadClass('RiskAnalyticsPcCashflowGrailsPlugin').newInstance().version
@@ -62,16 +61,13 @@ grails.project.dependency.distribution = {
         user = properties.get("user")
         password = properties.get("password")
 
-        if (version?.endsWith('-SNAPSHOT')){
-            scpUrl = properties.get("urlSnapshot")
-        }else {
-            scpUrl = properties.get("url")
-        }
-	remoteRepository(id: "pillarone", url: scpUrl) {
+        String scpUrl = properties.get( ( version?.endsWith('-SNAPSHOT')) ? "urlSnapshot" : "url" )
+	    remoteRepository(id: "pillarone", url: scpUrl) {
         	authentication username: user, password: password
     	}
 
     } catch (Throwable t) {
+        System.err.println("Error: " + t.message)
     }
 }
 
