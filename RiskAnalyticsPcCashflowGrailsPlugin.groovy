@@ -168,7 +168,7 @@ class RiskAnalyticsPcCashflowGrailsPlugin {
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CALENDARYEAR],[CDP.PAID] ,[CDP]))
 
         CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CAT_TYPE],[CCP.PAID_INDEXED] ,[CCP]))
-//      CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CAT_TYPE,DrillDownMode.BY_CALENDARYEAR],[CCP.PAID_INDEXED] ,[CCP]))
+        CollectingModeFactory.registerStrategy(new MonthlySplitAndFilterCollectionModeStrategy([DrillDownMode.BY_CAT_TYPE,DrillDownMode.BY_CALENDARYEAR],[CCP.PAID_INDEXED] ,[CCP]))
         //Order of DrillDownModes matters, at least in the CollectingModeStrategyResources.properties file - i.e. they should appear in the labels in the *.properties in the same order as in the list here
         // e.g. line above matches ICollectingModeStrategy.MONTHLY_BY_CAT_TYPE_BY_CALENDARYEAR_paidIncrementalIndexed
 
