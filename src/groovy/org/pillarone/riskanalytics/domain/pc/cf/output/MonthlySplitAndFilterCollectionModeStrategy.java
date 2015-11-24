@@ -68,6 +68,8 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
     private final List<Class<Packet>> compatibleClasses;
     private final String identifier_prefix;
 
+    private DateTime updateDate;
+    
     private GlobalReportingFrequency reportingFrequency;
     private List<DateTime> reportingDates;
     private DateTime periodStart;
@@ -172,17 +174,18 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
     @Override
     public List<SingleValueResultPOJO> collect(PacketList packets, boolean crashSimulationOnError) throws IllegalAccessException {
-        initSimulation();
-        IterationScope currentIterationScope = packetCollector.getSimulationScope().getIterationScope();
-        iteration = currentIterationScope.getCurrentIteration();
+        initSimulation(); //could be dpm
+        IterationScope currentIterationScope = packetCollector.getSimulationScope().getIterationScope(); //could be done once per iter
+        iteration = currentIterationScope.getCurrentIteration(); //could be done once per iteration
         period = currentIterationScope.getPeriodScope().getCurrentPeriod();
 
-        reportingFrequency = (GlobalReportingFrequency) packetCollector.getSimulationScope().getSimulation().getParameter("runtimeReportingFrequency");
+        reportingFrequency = (GlobalReportingFrequency) packetCollector.getSimulationScope().getSimulation().getParameter("runtimeReportingFrequency"); //could be done once per sim
         periodStart = currentIterationScope.getPeriodScope().getCurrentPeriodStartDate();
 
         periodEnd = currentIterationScope.getPeriodScope().getNextPeriodStartDate();
         reportingDates = reportingFrequency.getReportingDatesForPeriod(periodStart, periodEnd);
 
+        initUpdateDate(); //could be done once per sim
         //called once per "collect" call - i.e. once per period. The cache created in the financial module could be accessed by
         //calling packetCollector.getSimulationScope().getModel().getAllComponents() and traversing the returned list - doesn't sound more efficient...
         //ideally the "reporting dates" should be cached somewhere accessible and related to where the parameter is set
@@ -199,6 +202,23 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
         }
     }
 
+    private void initUpdateDate() {
+        Simulation simulation = packetCollector.getSimulationScope().getSimulation();
+        if(  simulation != null ){
+
+            updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate")); //could be done once per sim
+            if(updateDate == null ){
+                throw new IllegalArgumentException("Null updateDate" );
+            }
+        }else{
+            // Some test was passing in a hollow object with no sim (and hence no update date).
+            //
+            // - that was done for tests that this is now passing
+            throw new IllegalArgumentException("No update date in simulation context");
+        }
+
+    }
+    
     private Map<PathMapping, List<Packet>> allPathMappingsIncludingSplit(PacketList<Packet> packets) throws IllegalAccessException {
         Map<PathMapping, List<Packet>> resultMap = new LinkedHashMap<PathMapping, List<Packet>>(packets.size());
         for (Packet packet : packets) {
@@ -581,7 +601,8 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
     // ----------'NonNat Cat' part here:   10
     //
     private PathMapping getPathMappingForCatType(Packet packet) {
-        String pathExtension = ModelHelper.CAT_TYPE + ModelHelper.PATH_SEPARATOR  + NatOrNot(packet); //returns: 'Nat Cat' or 'NonNat Cat'
+        String pathExtension = ModelHelper.CAT_TYPE + ModelHelper.PATH_SEPARATOR  + financialQuarterOfOccurrence(packet)
+         + "_" + NatOrNot(packet); //returns: 'Nat Cat' or 'NonNat Cat'
         String pathExtended = getExtendedPath(packet, pathExtension); // another method that should live in PathMapping
         return mappingCache.lookupPath(pathExtended);
     }
@@ -591,12 +612,28 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
     private String calendarYearOfOccurrence(Packet packet) {
 
         DateTime occurrenceDate = null;
-        Simulation simulation = packetCollector.getSimulationScope().getSimulation();
+    //    Simulation simulation = packetCollector.getSimulationScope().getSimulation();
 
         occurrenceDate = getOccurrenceDate(packet);
         return ""+occurrenceDate.getYear();
     }
+    private String financialQuarterOfOccurrence(Packet packet) {
 
+        DateTime occurrenceDate = null;
+
+        int quarterOfYear;
+        String output;
+
+        occurrenceDate = getOccurrenceDate(packet);
+
+        output = ""+occurrenceDate.getYear();
+
+        quarterOfYear = ((occurrenceDate.getMonthOfYear() - 1) / 3) + 1;
+
+        return output.substring(output.length() - 2) + "Q" + quarterOfYear;
+
+
+    }
     // Initially simply treat it as Nat Cat if either :-
     // - claim generator class has rms in name (eg RMSCatClaimsGenerator), r
     // - claim generator has natcat in name
@@ -653,33 +690,19 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
     private String occurrencePeriodvsUpdateDate(Packet packet) {
 
+        DateTime occurrenceDate = getOccurrenceDate(packet);
 
-        Simulation simulation = packetCollector.getSimulationScope().getSimulation();
-        if(  simulation != null ){
-            DateTime updateDate = ((DateTime) simulation.getParameter("runtimeUpdateDate")); //couldn't this be set once? PA
-
-            if(updateDate == null ){
-                throw new IllegalArgumentException("Null updateDate" );
-            }
-
-            DateTime occurrenceDate = getOccurrenceDate(packet);
-
-            if (occurrenceDate.isBefore(updateDate)) {
-                //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem
-                return DrillDownMode.fromPastName;
-            } else if (occurrenceDate.isBefore(updateDate.plusYears(1))) {
-                //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
-                return DrillDownMode.fromNextName;
-            } else {
-                //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
-                return DrillDownMode.fromFutureName;
-            }
-        }else{
-            // Some test was passing in a hollow object with no sim (and hence no update date).
-            //
-            // - that was done for tests that this is now passing
-            throw new IllegalArgumentException("No update date in simulation context");
+        if (occurrenceDate.isBefore(updateDate)) {
+            //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)) - 1)); //hack to use the second last sim period, unused in the test case, to go around the path problem
+            return DrillDownMode.fromPastName;
+        } else if (occurrenceDate.isBefore(updateDate.plusYears(1))) {
+            //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
+            return DrillDownMode.fromNextName;
+        } else {
+            //    return formatter.print(PC.startOfPeriod(PC.belongsToPeriod(PC.endOfLastPeriod().minusMillis(500)))); //hack to use the last sim period, unused in the test case, to go around the path problem
+            return DrillDownMode.fromFutureName;
         }
+
 
     }
 
