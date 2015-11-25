@@ -630,7 +630,7 @@ public class MonthlySplitAndFilterCollectionModeStrategy extends AbstractMonthly
 
         quarterOfYear = ((occurrenceDate.getMonthOfYear() - 1) / 3) + 1;
 
-        return output.substring(output.length() - 2) + "Q" + quarterOfYear;
+        return output/*.substring(output.length() - 2)*/ + "Q" + quarterOfYear;
 
 
     }
