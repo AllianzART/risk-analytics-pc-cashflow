@@ -2,6 +2,7 @@ package org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.
 
 import com.google.common.collect.Lists;
 import org.pillarone.riskanalytics.core.parameterization.*;
+import org.pillarone.riskanalytics.core.util.Configuration;
 import org.pillarone.riskanalytics.core.util.GroovyUtils;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimValidator;
@@ -19,6 +20,9 @@ import java.util.*;
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
 public class SelectedCoverStrategy extends AbstractParameterObject implements ICoverStrategy {
+
+    private /*static*/ boolean forceInitCoveredContractsAndBase = // sadly statics are not settable during debugging
+        (Configuration.coreGetAndLogStringConfig("forceInitCoveredContractsAndBase", "true") == "true");
 
     private ComboBoxTableMultiDimensionalParameter grossClaims = new ComboBoxTableMultiDimensionalParameter(
             Collections.emptyList(), Arrays.asList("Covered Perils"), IPerilMarker.class);
@@ -51,6 +55,9 @@ public class SelectedCoverStrategy extends AbstractParameterObject implements IC
             coveredContracts = Lists.newArrayList();
             coveredContractsCoveringCeded = Lists.newArrayList();
             if (contractBasedCover()) {
+                if(forceInitCoveredContractsAndBase){
+                    getCoveredReinsuranceContractsAndBase(); // AR-203 Force initialisation to avoid NPE in next line
+                }
                 for (ReinsuranceContractAndBase contract : coveredContractsAndBase) {
                     coveredContracts.add(contract.reinsuranceContract);
                     if (contract.contractBase.equals(ReinsuranceContractBase.CEDED)) {
