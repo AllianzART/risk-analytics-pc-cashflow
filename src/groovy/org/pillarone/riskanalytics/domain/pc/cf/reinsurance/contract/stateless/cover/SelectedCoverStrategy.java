@@ -21,8 +21,8 @@ import java.util.*;
  */
 public class SelectedCoverStrategy extends AbstractParameterObject implements ICoverStrategy {
 
-    private /*static*/ boolean forceInitCoveredContractsAndBase = // sadly statics are not settable during debugging
-        (Configuration.coreGetAndLogStringConfig("forceInitCoveredContractsAndBase", "true") == "true");
+    private /*static*/ boolean forceInitCoveredContractsAndBase = true; // sadly statics are not settable during debugging
+//        (Configuration.coreGetAndLogStringConfig("forceInitCoveredContractsAndBase", "true") == "true"); // sadlyl grails config stuff unavailable in gridnodes
 
     private ComboBoxTableMultiDimensionalParameter grossClaims = new ComboBoxTableMultiDimensionalParameter(
             Collections.emptyList(), Arrays.asList("Covered Perils"), IPerilMarker.class);
