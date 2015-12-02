@@ -21,15 +21,16 @@ import java.util.*;
  */
 public class SelectedCoverStrategy extends AbstractParameterObject implements ICoverStrategy {
 
-    private /*static*/ boolean forceInitCoveredContractsAndBase = true; // sadly statics are not settable during debugging
-//        (Configuration.coreGetAndLogStringConfig("forceInitCoveredContractsAndBase", "true") == "true"); // sadlyl grails config stuff unavailable in gridnodes
-
     private ComboBoxTableMultiDimensionalParameter grossClaims = new ComboBoxTableMultiDimensionalParameter(
             Collections.emptyList(), Arrays.asList("Covered Perils"), IPerilMarker.class);
     private ConstrainedMultiDimensionalParameter structures = new ConstrainedMultiDimensionalParameter(
             GroovyUtils.toList("[[],[]]"),
             Arrays.asList(ContractBasedOn.CONTRACT, ContractBasedOn.BASED_ON),
             ConstraintsFactory.getConstraints(ContractBasedOn.IDENTIFIER));
+
+    private List<ReinsuranceContractAndBase> coveredContractsAndBase;
+    private List<IReinsuranceContractMarker> coveredContracts;
+    private List<IReinsuranceContractMarker> coveredContractsCoveringCeded;
 
     public IParameterObjectClassifier getType() {
         return CoverStrategyType.SELECTED;
@@ -46,18 +47,12 @@ public class SelectedCoverStrategy extends AbstractParameterObject implements IC
         return (List<IPerilMarker>) grossClaims.getValuesAsObjects(0, true);
     }
 
-    private List<ReinsuranceContractAndBase> coveredContractsAndBase;
-    private List<IReinsuranceContractMarker> coveredContracts;
-    private List<IReinsuranceContractMarker> coveredContractsCoveringCeded;
-
     private void lazyInitCoveredContracts() {
         if (coveredContracts == null) {
             coveredContracts = Lists.newArrayList();
             coveredContractsCoveringCeded = Lists.newArrayList();
             if (contractBasedCover()) {
-                if(forceInitCoveredContractsAndBase){
-                    getCoveredReinsuranceContractsAndBase(); // AR-203 Force initialisation to avoid NPE in next line
-                }
+                getCoveredReinsuranceContractsAndBase(); // AR-203 Forces initialisation of coveredContractsAndBase
                 for (ReinsuranceContractAndBase contract : coveredContractsAndBase) {
                     coveredContracts.add(contract.reinsuranceContract);
                     if (contract.contractBase.equals(ReinsuranceContractBase.CEDED)) {
