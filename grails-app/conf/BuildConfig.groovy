@@ -1,5 +1,5 @@
 //Use a custom plugins dir, because different branches use different plugin versions
-grails.project.plugins.dir = "../local-plugins/risk-analytics-pc-cashflow-master"
+grails.project.plugins.dir = "../local-plugins/risk-analytics-pc-cashflow-AR-111"
 
 grails.project.dependency.resolver = "maven"
 
@@ -11,7 +11,7 @@ grails.project.dependency.resolution = {
         grailsHome()
         mavenLocal()
 
-        mavenRepo (name:"zh-artisan-test" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
+        mavenRepo (name:"pillarone" , url:"http://zh-artisan-test.art-allianz.com:8085/nexus/content/groups/public/") {
             updatePolicy System.getProperty('snapshotUpdatePolicy') ?: 'daily'
         }
         grailsCentral()
@@ -31,8 +31,9 @@ grails.project.dependency.resolution = {
         compile ":excel-import:1.0.0"
 
         if (appName == "risk-analytics-pc-cashflow") {
-            runtime "org.pillarone:risk-analytics-core:1.10-SNAPSHOT"
-            runtime("org.pillarone:risk-analytics-commons:1.10-SNAPSHOT") { transitive = false }
+            runtime "org.pillarone:risk-analytics-core:AR-111-SNAPSHOT"
+            runtime("org.pillarone:risk-analytics-commons:1.10.1") { transitive = false }
+            runtime("org.pillarone:risk-analytics-property-casualty:AR-111-SNAPSHOT") { transitive = false }
         }
     }
 
@@ -44,15 +45,15 @@ grails.project.dependency.resolution = {
         }
     }
 }
-//grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core"
-//grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons"
+//grails.plugin.location.'risk-analytics-core' = "../risk-analytics-core-AR-111"
+//grails.plugin.location.'risk-analytics-property-casualty' = "../risk-analytics-property-casualty-AR-111"
+//grails.plugin.location.'risk-analytics-commons' = "../risk-analytics-commons-AR-111"
 
 grails.project.repos.default = "pillarone"
 
 grails.project.dependency.distribution = {
     String password = ""
     String user = ""
-    String scpUrl = ""
     try {
         Properties properties = new Properties()
         String version = new GroovyClassLoader().loadClass('RiskAnalyticsPcCashflowGrailsPlugin').newInstance().version
@@ -60,16 +61,13 @@ grails.project.dependency.distribution = {
         user = properties.get("user")
         password = properties.get("password")
 
-        if (version?.endsWith('-SNAPSHOT')){
-            scpUrl = properties.get("urlSnapshot")
-        }else {
-            scpUrl = properties.get("url")
-        }
-	remoteRepository(id: "pillarone", url: scpUrl) {
+        String scpUrl = properties.get( ( version?.endsWith('-SNAPSHOT')) ? "urlSnapshot" : "url" )
+	    remoteRepository(id: "pillarone", url: scpUrl) {
         	authentication username: user, password: password
     	}
 
     } catch (Throwable t) {
+        System.err.println("Error: " + t.message)
     }
 }
 

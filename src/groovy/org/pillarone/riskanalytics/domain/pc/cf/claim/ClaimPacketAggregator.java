@@ -10,8 +10,8 @@ import java.util.List;
 public class ClaimPacketAggregator implements IPacketAggregator<ClaimCashflowPacket> {
 
     public ClaimCashflowPacket aggregate(List<ClaimCashflowPacket> packetList) {
-        List<ClaimCashflowPacket> aggregateClaimsByBaseClaim = ClaimUtils.aggregateByBaseClaim(packetList);
-        return ClaimUtils.sum(aggregateClaimsByBaseClaim, true);
+
+        return ClaimUtils.sum(ClaimUtils.aggregateByBaseClaim(packetList), true);
     }
 
     @Override

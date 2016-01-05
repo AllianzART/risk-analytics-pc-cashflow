@@ -2,12 +2,9 @@ import org.pillarone.riskanalytics.core.simulation.engine.ModelTest
 import org.pillarone.riskanalytics.core.output.PathMapping
 import org.pillarone.riskanalytics.core.output.FieldMapping
 import org.pillarone.riskanalytics.core.output.SingleValueResult
-import org.pillarone.riskanalytics.core.output.DBOutput
 import org.pillarone.riskanalytics.core.output.ICollectorOutputStrategy
-import org.pillarone.riskanalytics.core.output.CollectorMapping
 import models.gira.GIRAModel
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket
-import org.pillarone.riskanalytics.domain.pc.cf.output.AggregateSplitPerSourceCollectingModeStrategy
 import org.apache.commons.lang.builder.HashCodeBuilder
 import org.pillarone.riskanalytics.core.output.TestDBOutput
 

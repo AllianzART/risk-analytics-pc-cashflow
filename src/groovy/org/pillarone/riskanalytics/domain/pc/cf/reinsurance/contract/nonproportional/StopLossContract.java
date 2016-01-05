@@ -57,7 +57,7 @@ public class StopLossContract extends AbstractReinsuranceContract implements INo
         if (aggregateClaimStorage == null) {
             aggregateClaimStorage = new AggregateEventClaimsStorage();
         }
-        aggregateClaimStorage.add(ClaimUtils.sum(grossClaims, true));
+        aggregateClaimStorage.add(ClaimUtils.sum(ClaimUtils.castCCPListToPacketList(grossClaims) , true));
 
         cededFactor(BasedOnClaimProperty.ULTIMATE_UNINDEXED, aggregateClaimStorage);
         cededFactor(BasedOnClaimProperty.ULTIMATE_INDEXED, aggregateClaimStorage);

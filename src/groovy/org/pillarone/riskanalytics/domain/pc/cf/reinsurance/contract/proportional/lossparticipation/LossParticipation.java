@@ -75,7 +75,7 @@ public class LossParticipation implements ILossParticipation {
         }
 
         private void update(List<ClaimCashflowPacket> claims, List<UnderwritingInfoPacket> underwritingInfos) {
-            ClaimCashflowPacket totalClaim = ClaimUtils.sum(claims, true);
+            ClaimCashflowPacket totalClaim =  ClaimUtils.sum(ClaimUtils.castCCPListToPacketList(claims), true);
 
             if (totalClaim != null) {
                 ultimate += totalClaim.ultimate() + totalClaim.developmentResultCumulative();

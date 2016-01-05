@@ -111,10 +111,10 @@ public class CommutationState extends MultiValuePacket {
 
     /**
      * Answers the question ' Do we want the simulation to continue ?
-     * True if we are not commuted, false if commuted
+     * True if we are not commuted, false if commuted in prior period
      *
      * @param periodScope periodSCope
-     * @return True if we are commuted, false if not commuted
+     * @return True unless commuted in a prior period
      */
     public boolean checkCommutation(PeriodScope periodScope) {
         return !isCommuted() || isCommuted() && getCommutationPeriod() == periodScope.getCurrentPeriod();
