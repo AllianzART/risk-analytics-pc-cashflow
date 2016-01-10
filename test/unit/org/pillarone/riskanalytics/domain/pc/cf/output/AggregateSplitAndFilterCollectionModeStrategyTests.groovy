@@ -16,12 +16,13 @@ import org.pillarone.riskanalytics.core.simulation.engine.IterationScope
 import org.pillarone.riskanalytics.core.simulation.engine.MappingCache
 import org.pillarone.riskanalytics.core.simulation.engine.PeriodScope
 import org.pillarone.riskanalytics.core.simulation.engine.SimulationScope
+import org.pillarone.riskanalytics.core.simulation.item.Simulation
+import org.pillarone.riskanalytics.core.simulation.item.parameter.ParameterHolderFactory
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket
 import org.pillarone.riskanalytics.domain.pc.cf.claim.generator.ClaimsGenerator
 import org.pillarone.riskanalytics.domain.pc.cf.segment.Segment
 import org.pillarone.riskanalytics.core.output.DrillDownMode
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.AdditionalPremium
-import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.additionalPremium.APBasis
 import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.contracts.StatelessRIContract
 import org.pillarone.riskanalytics.domain.utils.marker.IReinsuranceContractMarker
 import org.pillarone.riskanalytics.core.packets.Packet
@@ -30,8 +31,12 @@ import org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.a
 /**
  * @author detlef.brendle (at) canoo (dot) com
  */
-class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
-    SplitAndFilterCollectionModeStrategy strategy
+
+
+//TODO Build 'Single' corresponding test class
+//
+class AggregateSplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
+    AggregateSplitAndFilterCollectionModeStrategy strategy
 
     private void setupStrategy(List<DrillDownMode> splitModes = [], List<String> fieldFilter = [], def simulationStart = new DateTime(System.currentTimeMillis())) {
         setupStrategy(splitModes, fieldFilter, simulationStart, [])
@@ -41,12 +46,14 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         mockDomain(PathMapping)
         mockDomain(CollectorMapping)
         mockDomain(FieldMapping)
-        strategy = new SplitAndFilterCollectionModeStrategy(splitModes, fieldFilter, compatibleClasses)
+        strategy = new AggregateSplitAndFilterCollectionModeStrategy(splitModes, fieldFilter, compatibleClasses)
         PacketCollector packetCollector = new PacketCollector(strategy)
         packetCollector.setPath("Path:to:collect")
         SimulationScope simulationScope = new SimulationScope()
         simulationScope.setStructureInformation(new StructureInformation(new ConfigObject(), new GIRAModel()))
         simulationScope.setMappingCache(new MappingCache())
+        simulationScope.simulation = new Simulation("SpiltAndFilterCollectionModeStrategyUnitTest");  //AR-111: sims will need to have and UpdateDate for the BY_UPDATEDATE split to work
+        simulationScope.simulation.addParameter(ParameterHolderFactory.getHolder("runtimeUpdateDate",0,simulationStart.plusMonths(3)))
         IterationScope iterationScope = new IterationScope()
         PeriodScope periodScope = new PeriodScope()
         periodScope.setPeriodCounter(new LimitedContinuousPeriodCounter(simulationStart, new Period(1, 0, 0, 0), 10))
@@ -74,6 +81,7 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         assert 2 == result.size(), 'only the ultimate and changes in IBNR fields expected'
     }
 
+// AR-111 USED TO BREAK THIS
     void testCollectChanges_no_filter_split_by_period() {
         def simulationStart = new DateTime(System.currentTimeMillis())
         PacketList packets = new PacketList()
@@ -81,6 +89,17 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         packet.baseClaim.exposureStartDate = simulationStart
         packets.add(packet)
         setupStrategy([DrillDownMode.BY_PERIOD], [], simulationStart)
+        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
+        assert 2 * packet.valuesToSave.size() == result.size()
+    }
+
+    void testCollectChanges_no_filter_split_by_updatedate() {
+        def simulationStart = new DateTime(System.currentTimeMillis())
+        PacketList packets = new PacketList()
+        def packet = new ClaimCashflowPacket()
+        packet.baseClaim.occurrenceDate = simulationStart.plusDays(1)
+        packets.add(packet)
+        setupStrategy([DrillDownMode.BY_UPDATEDATE], [], simulationStart)
         List<SingleValueResultPOJO> result = strategy.collect(packets, false)
         assert 2 * packet.valuesToSave.size() == result.size()
     }
@@ -100,6 +119,7 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
 
 
 
+// AR-111 USED TO BREAK THIS
     void testCollectChanges_no_filter_split_by_source_and_by_period() {
         def simulationStart = new DateTime(System.currentTimeMillis())
         PacketList packets = new PacketList()
@@ -114,6 +134,22 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         assert 3 * packet.valuesToSave.size() == result.size()
     }
 
+    void testCollectChanges_no_filter_split_by_source_and_by_updatedate() {
+        def simulationStart = new DateTime(System.currentTimeMillis())
+        PacketList packets = new PacketList()
+        def packet = new ClaimCashflowPacket()
+        packets.add(packet)
+        packet.baseClaim.exposureStartDate = simulationStart
+        packet.baseClaim.occurrenceDate = simulationStart.plusDays(15)
+        packet.senderChannelName = 'senderChannelName'
+        packet.setSender(new Segment())
+        packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
+        setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [], simulationStart)
+        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
+        assert 3 * packet.valuesToSave.size() == result.size()
+    }
+
+// AR-111 USED TO BREAK THIS
     void testCollectChanges_with_filter_split_by_source_and_by_period() {
         def simulationStart = new DateTime(System.currentTimeMillis())
         PacketList packets = new PacketList()
@@ -124,6 +160,21 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         packet.setSender(new Segment())
         packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
         setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_PERIOD], [ClaimCashflowPacket.CHANGES_IN_IBNR_INDEXED], simulationStart)
+        List<SingleValueResultPOJO> result = strategy.collect(packets, false)
+        assert 3 == result.size()
+    }
+
+    void testCollectChanges_with_filter_split_by_source_and_by_updatedate() {
+        def simulationStart = new DateTime(System.currentTimeMillis())
+        PacketList packets = new PacketList()
+        def packet = new ClaimCashflowPacket()
+        packets.add(packet)
+        packet.baseClaim.exposureStartDate = simulationStart
+        packet.baseClaim.occurrenceDate = simulationStart.plusDays(15)
+        packet.senderChannelName = 'senderChannelName'
+        packet.setSender(new Segment())
+        packet.setMarker(new ClaimsGenerator(name: "testClaimsGenerator"))
+        setupStrategy([DrillDownMode.BY_SOURCE, DrillDownMode.BY_UPDATEDATE], [ClaimCashflowPacket.CHANGES_IN_IBNR_INDEXED], simulationStart)
         List<SingleValueResultPOJO> result = strategy.collect(packets, false)
         assert 3 == result.size()
     }
@@ -140,7 +191,7 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
     }
 
     void testIdentifier(){
-        strategy = new SplitAndFilterCollectionModeStrategy()
+        strategy = new AggregateSplitAndFilterCollectionModeStrategy()
         assert 'AGGREGATE_NO-SPLIT_NO-FILTER' == strategy.identifier
         setupStrategy()
         assert 'AGGREGATE_NO-SPLIT_NO-FILTER' == strategy.identifier
@@ -152,6 +203,8 @@ class SplitAndFilterCollectionModeStrategyTests extends GrailsUnitTestCase {
         assert 'AGGREGATE_BY_PERIOD_field1' == strategy.identifier
         setupStrategy([DrillDownMode.BY_TYPE])
         assert 'AGGREGATE_BY_TYPE' == strategy.identifier
+        setupStrategy([DrillDownMode.BY_UPDATEDATE])              //AR-111
+        assert 'AGGREGATE_BY_UPDATEDATE' == strategy.identifier   //AR-111
     }
 
     void testNewInstance() {

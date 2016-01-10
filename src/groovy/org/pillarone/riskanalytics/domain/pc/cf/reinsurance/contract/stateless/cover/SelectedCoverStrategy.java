@@ -2,6 +2,7 @@ package org.pillarone.riskanalytics.domain.pc.cf.reinsurance.contract.stateless.
 
 import com.google.common.collect.Lists;
 import org.pillarone.riskanalytics.core.parameterization.*;
+import org.pillarone.riskanalytics.core.util.Configuration;
 import org.pillarone.riskanalytics.core.util.GroovyUtils;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimValidator;
@@ -27,6 +28,10 @@ public class SelectedCoverStrategy extends AbstractParameterObject implements IC
             Arrays.asList(ContractBasedOn.CONTRACT, ContractBasedOn.BASED_ON),
             ConstraintsFactory.getConstraints(ContractBasedOn.IDENTIFIER));
 
+    private List<ReinsuranceContractAndBase> coveredContractsAndBase;
+    private List<IReinsuranceContractMarker> coveredContracts;
+    private List<IReinsuranceContractMarker> coveredContractsCoveringCeded;
+
     public IParameterObjectClassifier getType() {
         return CoverStrategyType.SELECTED;
     }
@@ -42,15 +47,12 @@ public class SelectedCoverStrategy extends AbstractParameterObject implements IC
         return (List<IPerilMarker>) grossClaims.getValuesAsObjects(0, true);
     }
 
-    private List<ReinsuranceContractAndBase> coveredContractsAndBase;
-    private List<IReinsuranceContractMarker> coveredContracts;
-    private List<IReinsuranceContractMarker> coveredContractsCoveringCeded;
-
     private void lazyInitCoveredContracts() {
         if (coveredContracts == null) {
             coveredContracts = Lists.newArrayList();
             coveredContractsCoveringCeded = Lists.newArrayList();
             if (contractBasedCover()) {
+                getCoveredReinsuranceContractsAndBase(); // AR-203 Forces initialisation of coveredContractsAndBase
                 for (ReinsuranceContractAndBase contract : coveredContractsAndBase) {
                     coveredContracts.add(contract.reinsuranceContract);
                     if (contract.contractBase.equals(ReinsuranceContractBase.CEDED)) {

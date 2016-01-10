@@ -5,9 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pillarone.riskanalytics.core.components.Component;
 import org.pillarone.riskanalytics.core.components.DynamicComposedComponent;
-import org.pillarone.riskanalytics.core.components.IComponentMarker;
 import org.pillarone.riskanalytics.core.output.DrillDownMode;
-import org.pillarone.riskanalytics.core.output.ICollectingModeStrategy;
 import org.pillarone.riskanalytics.core.output.PathMapping;
 import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
 import org.pillarone.riskanalytics.core.packets.Packet;
@@ -26,9 +24,9 @@ import java.util.*;
  *
  * @author stefan.kunz (at) intuitive-collaboration (dot) com
  */
-public class AggregateSplitPerSourceCollectingModeStrategy extends AbstractSplitCollectingModeStrategy {
+public class AggregateSplitPerSourceCollectionModeStrategy extends AbstractAggregateSplitCollectionModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(AggregateSplitPerSourceCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(AggregateSplitPerSourceCollectionModeStrategy.class);
 
     static final String IDENTIFIER = "SPLIT_PER_SOURCE";
     private static final String PERILS = "claimsGenerators";

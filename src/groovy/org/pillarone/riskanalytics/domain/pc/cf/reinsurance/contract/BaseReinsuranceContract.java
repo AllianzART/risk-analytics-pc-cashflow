@@ -352,7 +352,7 @@ public abstract class BaseReinsuranceContract extends Component implements IRein
     private void mergeCededClaimsForMultipleContractsInSamePeriod(ListMultimap<ClaimCashflowPacket, ClaimCashflowPacket> cededClaimsByGrossClaim) {
         for (Map.Entry<ClaimCashflowPacket, ClaimCashflowPacket> entry : cededClaimsByGrossClaim.entries()) {
             List<ClaimCashflowPacket> cededClaims = (List<ClaimCashflowPacket>) entry.getValue();
-            outClaimsCeded.add(ClaimUtils.sum(cededClaims, true));
+            outClaimsCeded.add(ClaimUtils.sum(ClaimUtils.castCCPListToPacketList(cededClaims), true));
             if (isSenderWired(outClaimsGross) || isSenderWired(outDiscountedValues) || isSenderWired(outNetPresentValues)) {
                 // fill outClaimsGross temporarily if discounting or net present values are calculated as they are relaying on it
                 outClaimsGross.add(entry.getKey());

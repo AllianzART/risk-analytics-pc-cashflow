@@ -537,7 +537,7 @@ public class FinancialsPacket extends MultiValuePacket {
 
         public void initClaimRelatedFigures(List<ClaimCashflowPacket> claims, Boolean occurrenceInCurrentPeriod, Boolean cededOrNetFigures) {
             if (!claims.isEmpty()) {
-                ClaimCashflowPacket sum = ClaimUtils.sum(claims, true);
+                ClaimCashflowPacket sum = ClaimUtils.sum(ClaimUtils.castCCPListToPacketList(claims), true);
                 claimUltimate = sum.ultimate();
                 claimTotal = sum.totalIncrementalIndexed();
                 claimPaid = sum.getPaidIncrementalIndexed();

@@ -3,29 +3,34 @@ package org.pillarone.riskanalytics.domain.pc.cf.output;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pillarone.riskanalytics.core.components.IComponentMarker;
-import org.pillarone.riskanalytics.core.output.*;
+import org.pillarone.riskanalytics.core.model.ModelHelper;
+import org.pillarone.riskanalytics.core.output.ICollectingModeStrategy;
+import org.pillarone.riskanalytics.core.output.PacketCollector;
+import org.pillarone.riskanalytics.core.output.SingleValueResultPOJO;
 import org.pillarone.riskanalytics.core.packets.Packet;
 import org.pillarone.riskanalytics.core.packets.PacketList;
+import org.pillarone.riskanalytics.core.output.PathMapping;
 import org.pillarone.riskanalytics.core.simulation.SimulationException;
 import org.pillarone.riskanalytics.core.simulation.engine.MappingCache;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimUtils;
 import org.pillarone.riskanalytics.domain.pc.cf.exposure.UnderwritingInfoPacket;
+import org.pillarone.riskanalytics.domain.pc.reserves.cashflow.ClaimDevelopmentPacket;
 import org.pillarone.riskanalytics.domain.utils.marker.ComposedMarkerKey;
 
 import java.util.*;
 
 /**
- * Component has the same purpose as AggregateDrillDownCollectingModeStrategy in the property casualty plugin and a similar implementation
+ * Copy/modify from AbstractAggregateSplitAndFilterCollectionModeStrategy.. refactor later.
  *
- * @author stefan.kunz (at) intuitive-collaboration (dot) com
+ * @author paolo.albini (at) art-allianz (dot) com
  */
-abstract public class AbstractSplitCollectingModeStrategy implements ICollectingModeStrategy {
+abstract public class AbstractMonthlySplitCollectionModeStrategy implements ICollectingModeStrategy {
 
-    protected static Log LOG = LogFactory.getLog(AbstractSplitCollectingModeStrategy.class);
+    protected static Log LOG = LogFactory.getLog(AbstractMonthlySplitCollectionModeStrategy.class);
 
     protected static final String RESOURCE_BUNDLE = "org.pillarone.riskanalytics.domain.pc.cf.output.CollectingModeStrategyResources";
-    protected static final String PATH_SEPARATOR = ":";
+//    protected static final String PATH_SEPARATOR = ":";
     protected String displayName;
 
     protected PacketCollector packetCollector;
@@ -44,52 +49,16 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
         markerPaths = new HashMap<IComponentMarker, PathMapping>();
         markerComposedPaths = new HashMap<ComposedMarkerKey, PathMapping>();
         mappingCache = packetCollector.getSimulationScope().getMappingCache();
+
     }
 
     abstract public List<SingleValueResultPOJO> collect(PacketList packets, boolean crashSimulationOnError) throws IllegalAccessException;
 
-    /**
-     * Create a SingleValueResult object for each packetValue.
-     * Information about current simulation is gathered from the scopes.
-     * The key of the value map is the path.
-     *
-     * @param packets
-     * @return
-     * @throws IllegalAccessException
-     */
-    protected List<SingleValueResultPOJO> createSingleValueResults(Map<PathMapping, Packet> packets, boolean crashSimulationOnError) throws IllegalAccessException {
-        List<SingleValueResultPOJO> singleValueResults = new ArrayList<SingleValueResultPOJO>(packets.size());
-        boolean firstPath = true;
-        for (Map.Entry<PathMapping, Packet> packetEntry : packets.entrySet()) {
-            PathMapping path = packetEntry.getKey();
-            Packet packet = packetEntry.getValue();
-            for (Map.Entry<String, Number> field : filter(packet.getValuesToSave()).entrySet()) {
-                String fieldName = field.getKey();
-                Double value = (Double) field.getValue();
-                if (checkInvalidValues(fieldName, value, period, iteration, crashSimulationOnError)) continue;
-                SingleValueResultPOJO result = new SingleValueResultPOJO();
-                result.setIteration(iteration);
-                result.setPeriod(period);
-                result.setDate(packet.getDate());
-                result.setPath(path);
-                if (firstPath) {    // todo(sku): might be completely removed
-                    result.setCollector(mappingCache.lookupCollector("AGGREGATED"));
-                }
-                else {
-                    result.setCollector(mappingCache.lookupCollector(getIdentifier()));
-                }
-                result.setField(mappingCache.lookupField(fieldName));
-                result.setValueIndex(0);
-                result.setValue(value);
-                singleValueResults.add(result);
-            }
-            firstPath = false;
-        }
-        return singleValueResults;
-    }
+
 
     public boolean checkInvalidValues(String name, Double value, int period, int iteration, boolean crashSimulationOnError) {
         if (value.isInfinite() || value.isNaN()) {
+
             StringBuilder message = new StringBuilder();
             message.append(value).append(" collected at ").append(packetCollector.getPath()).append(":").append(name);
             message.append(" (period ").append(period).append(") in iteration ");
@@ -123,7 +92,7 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
     protected PathMapping getPathMapping(Packet packet, IComponentMarker marker, String pathExtensionPrefix) {
         PathMapping path = markerPaths.get(marker);
         if (marker != null && path == null) {
-            String pathExtension = pathExtensionPrefix + PATH_SEPARATOR + marker.getName();
+            String pathExtension = pathExtensionPrefix + ModelHelper.PATH_SEPARATOR  + marker.getName();
             String pathExtended = getExtendedPath(packet, pathExtension);
             path = mappingCache.lookupPath(pathExtended);
             markerPaths.put(marker, path);
@@ -137,8 +106,8 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
         ComposedMarkerKey pair = new ComposedMarkerKey(firstMarker, secondMarker);
         PathMapping path = markerComposedPaths.get(pair);
         if (firstMarker != null && path == null) {
-            String pathExtension = firstPathExtensionPrefix + PATH_SEPARATOR + firstMarker.getName()
-                    + PATH_SEPARATOR + secondPathExtensionPrefix + PATH_SEPARATOR + secondMarker.getName();
+            String pathExtension = firstPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + firstMarker.getName()
+                    + ModelHelper.PATH_SEPARATOR + secondPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + secondMarker.getName();
             String pathExtended = getExtendedPath(packet, pathExtension);
             path = mappingCache.lookupPath(pathExtended);
             markerComposedPaths.put(pair, path);
@@ -153,9 +122,9 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
         ComposedMarkerKey pair = new ComposedMarkerKey(firstMarker, secondMarker, thirdMarker);
         PathMapping path = markerComposedPaths.get(pair);
         if (firstMarker != null && path == null) {
-            String pathExtension = firstPathExtensionPrefix + PATH_SEPARATOR + firstMarker.getName()
-                    + PATH_SEPARATOR + secondPathExtensionPrefix + PATH_SEPARATOR + secondMarker.getName()
-                    + PATH_SEPARATOR + thirdPathExtensionPrefix + PATH_SEPARATOR + thirdMarker.getName();
+            String pathExtension = firstPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + firstMarker.getName()
+                    + ModelHelper.PATH_SEPARATOR + secondPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + secondMarker.getName()
+                    + ModelHelper.PATH_SEPARATOR + thirdPathExtensionPrefix + ModelHelper.PATH_SEPARATOR + thirdMarker.getName();
             String pathExtended = getExtendedPath(packet, pathExtension);
             path = mappingCache.lookupPath(pathExtended);
             markerComposedPaths.put(pair, path);
@@ -182,6 +151,20 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
         }
     }
 
+    protected void addToMap(ClaimDevelopmentPacket claim, PathMapping path, Map<PathMapping, Packet> resultMap) {
+        if (path == null) return;
+        if (resultMap.containsKey(path)) {
+            ClaimDevelopmentPacket aggregateClaim = (ClaimDevelopmentPacket) resultMap.get(path);
+            List<ClaimDevelopmentPacket> claims = new ArrayList<ClaimDevelopmentPacket>();
+            claims.add(aggregateClaim);
+            claims.add(claim);
+            resultMap.put(path, ClaimUtils.sumCDP(ClaimUtils.aggregateByBaseClaimCDP(claims), true));
+        } else {
+            ClaimDevelopmentPacket clonedClaim = (ClaimDevelopmentPacket) claim.copy();
+            resultMap.put(path, clonedClaim);
+        }
+    }
+
     protected void addToMap(UnderwritingInfoPacket underwritingInfo, PathMapping path, Map<PathMapping, Packet> resultMap) {
         if (path == null) return;
         if (resultMap.containsKey(path)) {
@@ -197,9 +180,9 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
     protected String getExtendedPath(Packet packet, String pathExtension) {
         if (pathExtension == null) return null;
         StringBuilder composedPath = new StringBuilder(componentPath);
-        composedPath.append(PATH_SEPARATOR);
+        composedPath.append(ModelHelper.PATH_SEPARATOR);
         composedPath.append(pathExtension);
-        composedPath.append(PATH_SEPARATOR);
+        composedPath.append(ModelHelper.PATH_SEPARATOR);
         composedPath.append(packet.senderChannelName);
         return composedPath.toString();
     }
@@ -225,6 +208,7 @@ abstract public class AbstractSplitCollectingModeStrategy implements ICollecting
         return ClaimCashflowPacket.class.isAssignableFrom(packetClass) || UnderwritingInfoPacket.class.isAssignableFrom(packetClass);
     }
 
+    // TODO make this abstract and test if ok
     public Object[] getArguments() {
         return new Object[0];
     }

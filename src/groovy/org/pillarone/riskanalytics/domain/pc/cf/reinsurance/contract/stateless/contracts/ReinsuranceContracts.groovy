@@ -35,6 +35,7 @@ class ReinsuranceContracts extends DynamicComposedComponent {
 
     @Override
     Component createDefaultSubComponent() {
+        //FR Broken? subcomponents are ReinsuranceContract objs yet stored in a map of TermReinsuranceContract objs (*different* class)
         new ReinsuranceContract()
     }
 

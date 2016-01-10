@@ -104,13 +104,23 @@ public class AggregateHistoricClaim {
 
     public void consistencyCheck(boolean sanityChecks){
         if(sanityChecks) {
-            double priorPaid = -1;
+            Map.Entry<DateTime, Double> priorEntry = null;
             for (Map.Entry<DateTime, Double> entry : claimPaidUpdates.entrySet()) {
-                if (priorPaid > entry.getValue()) {
-                    throw new SimulationException("It appears that the cumulative paid values for the historic claim in period; *" + (contractPeriod + 1) +
-                            "* decrease. The entries for this period are ; \n \n" + ExceptionUtils.getErrorDatesAndValues(claimPaidUpdates).toString());
+                if (priorEntry != null) {
+                    if (priorEntry.getValue() > entry.getValue()) {
+                        throw new SimulationException(
+                            String.format(
+                                "Period %d: Cumulative paid [%f] at date [%s] DECREASED from paid [%f] at date [%s]. Entries are: \n\n%s",
+                                (contractPeriod + 1),
+                                entry.getValue(),
+                                DateTimeUtilities.formatDate.print(entry.getKey()),
+                                priorEntry.getValue(),
+                                DateTimeUtilities.formatDate.print(priorEntry.getKey()),
+                                ExceptionUtils.getErrorDatesAndValues(claimPaidUpdates).toString()
+                            ));
+                    }
                 }
-                priorPaid = entry.getValue();
+                priorEntry = entry;
             }
         }
     }
