@@ -239,6 +239,13 @@ public class PatternPacket extends Packet implements Cloneable {
      * @return nearest pattern index with month value greater or equal elapsedMonths or null if elapsedMonths is after last period
      */
     public Integer thisOrNextPayoutIndex(double elapsedMonths) {
+
+        // Walking a list using positional indexing is generally a BAD idea, see this excerpt from the javadoc (!) :
+            // * iterating over the elements in a list is typically preferable
+            // * to indexing through it if the caller does not know the
+            // * implementation.
+        // ..which applies here, as the constructor does not guarantee that cumulativePeriods is an ArrayList.
+
         for (int i = 0; i < cumulativePeriods.size(); i++) {
             if (elapsedMonths <= cumulativePeriods.get(i).getMonths()) {
                 return i;
