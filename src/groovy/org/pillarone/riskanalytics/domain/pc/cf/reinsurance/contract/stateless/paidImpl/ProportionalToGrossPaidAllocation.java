@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pillarone.riskanalytics.core.simulation.SimulationException;
 import org.pillarone.riskanalytics.core.simulation.engine.PeriodScope;
+import org.pillarone.riskanalytics.core.util.MathUtils;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimCashflowPacket;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ClaimUtils;
 import org.pillarone.riskanalytics.domain.pc.cf.claim.ICededRoot;
@@ -124,13 +125,21 @@ public class ProportionalToGrossPaidAllocation implements IPaidAllocation {
                 }
             }
             double checkCededPaidInModelPeriod = RIUtilities.incrementalCashflowSum(cashflowClaimsForPeriodCheck);
-            double checkValue = ExceptionUtils.getCheckValue(checkCededPaidInModelPeriod);
-            if(!(
-                    (checkCededPaidInModelPeriod - entry.getValue() > - checkValue) && (checkCededPaidInModelPeriod - entry.getValue() < checkValue ))
-                ) {
+//            double checkValue = ExceptionUtils.getCheckValue(checkCededPaidInModelPeriod);
+            double epsilon = MathUtils.getRelativeEpsilon(checkCededPaidInModelPeriod,entry.getValue());
+//            if(!(
+//                    (checkCededPaidInModelPeriod - entry.getValue() > - checkValue) && (checkCededPaidInModelPeriod - entry.getValue() < checkValue ))
+//                    ) {
+//                throw new SimulationException("Claims in model period; " + entry.getKey()  + " allocated incremental paid " + df.format(checkCededPaidInModelPeriod) + " do not match "
+//                        + "the calculated paid amount in the period = " + df.format(entry.getValue()) + ". In simulation period periodScope " + periodScope.getCurrentPeriod() +
+//                        " There must be an error in the claim allocation routine. Please forward to development"
+//                );
+//            }
+            if( Math.abs(checkCededPaidInModelPeriod - entry.getValue()) > epsilon )
+            {
                 throw new SimulationException("Claims in model period; " + entry.getKey()  + " allocated incremental paid " + df.format(checkCededPaidInModelPeriod) + " do not match "
                         + "the calculated paid amount in the period = " + df.format(entry.getValue()) + ". In simulation period periodScope " + periodScope.getCurrentPeriod() +
-                        " There must be an error in the claim allocation routine. Please forward to development"
+                        " There must be an error in the claim allocation routine. Tolerance used:" + epsilon
                 );
             }
         }
